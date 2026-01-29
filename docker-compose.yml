@@ -1,0 +1,62 @@
+services:
+  # 1. Database Service (SQL Server)
+  sql_server:
+    container_name: bicap_sql_server
+    image: mcr.microsoft.com/azure-sql-edge
+    environment:
+      ACCEPT_EULA: "1"
+      MSSQL_SA_PASSWORD: "BiCapProject@123" # Updated to match user preference
+    ports:
+      - "1433:1433"
+    volumes:
+      # Lưu dữ liệu ra thư mục .docker_data để không bị mất khi tắt container
+      - ./.docker_data_new/sql:/var/opt/mssql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "bash -c '(echo > /dev/tcp/localhost/1433) >/dev/null 2>&1'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: always
+
+  # 2. Backend Service
+  backend:
+    container_name: bicap_backend
+    build: ./bicap-backend
+    ports:
+      - "5001:5001"
+    env_file:             
+      - ./bicap-backend/.env
+    environment:
+      - DB_HOST=sql_server
+      - DB_USER=sa
+      - DB_PASS=BiCapProject@123
+      - DB_NAME=BICAP
+      - DB_PORT=1433
+      - PORT=5001
+      # Thêm các biến môi trường khác từ .env của bạn nếu cần
+    depends_on:
+      sql_server:
+        condition: service_healthy
+    restart: always
+
+  # 3. Frontend Service (Web App)
+  frontend:
+    container_name: bicap_frontend
+    build:
+      context: ./bicap-web-client
+      args:
+        - NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
+        - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+        - NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+        - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
+        - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}
+        - NEXT_PUBLIC_FIREBASE_APP_ID=${NEXT_PUBLIC_FIREBASE_APP_ID}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5001/api}
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5001/api # Client side call
+    depends_on:
+      - backend
+    restart: always

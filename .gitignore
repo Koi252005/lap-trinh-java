@@ -1,0 +1,99 @@
+# ===================================
+# Dependencies
+# ===================================
+node_modules/
+**/node_modules/
+
+# ===================================
+# Environment variables (Sensitive)
+# ===================================
+.env
+.env.*
+*.env
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Cho phép commit file mẫu
+!*.env.example
+
+# ===================================
+# Build / Output
+# ===================================
+dist/
+build/
+web-build/
+**/dist/
+**/build/
+**/web-build/
+
+# Next.js
+.next/
+**/.next/
+
+# Expo / React Native
+.expo/
+**/.expo/
+
+# ===================================
+# Logs
+# ===================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===================================
+# OS generated files
+# ===================================
+.DS_Store
+Thumbs.db
+**/.DS_Store
+**/Thumbs.db
+
+# ===================================
+# IDE / Editor
+# ===================================
+.idea/
+.vscode/
+**/.idea/
+**/.vscode/
+
+# ===================================
+# Misc
+# ===================================
+coverage/
+**/coverage/
+
+# ===================================
+# Docker
+# ===================================
+
+# Docker override / local-only compose
+docker-compose.override.yml
+docker-compose.*.local.yml
+**/docker-compose.*.local.yml
+
+# Docker runtime / data
+.docker_data/
+docker-data/
+.docker_data_new/
+**/.docker_data/
+**/.docker_data_new/
+**/docker-data/
+
+
+# ===================================
+# Firebase
+# ===================================
+serviceAccountKey.json
+create_admin.js
+**/create_admin.js
+
+# ===================================
+# Uploads
+# ===================================
+uploads/
+**/uploads/
+bicap-backend/uploads/
