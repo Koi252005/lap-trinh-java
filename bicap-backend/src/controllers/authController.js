@@ -12,6 +12,25 @@ exports.syncUser = async (req, res) => {
     // Client có thể gửi thêm role nếu là đăng ký mới (Optional)
     const { role, fullName } = req.body;
 
+    // Check if database is connected
+    try {
+      await User.sequelize.authenticate();
+    } catch (dbError) {
+      console.warn('Database not connected, returning Firebase user only:', dbError.message);
+      // Return Firebase user info even if DB is not connected
+      return res.status(200).json({
+        message: 'Đăng nhập thành công (Database chưa kết nối - chỉ dùng Firebase)',
+        user: {
+          firebaseUid: uid,
+          email: email,
+          fullName: fullName || name || 'User',
+          role: role || 'retailer',
+          status: 'active'
+        },
+        warning: 'Database chưa kết nối. Một số tính năng có thể không hoạt động.'
+      });
+    }
+
     // 1. Tìm user trong DB theo firebaseUid
     let user = await User.findOne({ where: { firebaseUid: uid } });
 
@@ -82,6 +101,24 @@ exports.syncUser = async (req, res) => {
 
   } catch (error) {
     console.error('Sync User Error Detailed:', error); // Log more detail
+    
+    // If database error, return Firebase user info as fallback
+    if (error.name === 'SequelizeConnectionError' || error.name === 'SequelizeHostNotFoundError') {
+      const { uid, email, name } = req.userFirebase;
+      const { role, fullName } = req.body;
+      return res.status(200).json({
+        message: 'Đăng nhập thành công (Database chưa kết nối - chỉ dùng Firebase)',
+        user: {
+          firebaseUid: uid,
+          email: email,
+          fullName: fullName || name || 'User',
+          role: role || 'retailer',
+          status: 'active'
+        },
+        warning: 'Database chưa kết nối. Một số tính năng có thể không hoạt động.'
+      });
+    }
+    
     res.status(500).json({ message: 'Lỗi đồng bộ User', error: error.message, details: error.errors });
   }
 };

@@ -36,7 +36,7 @@ export default function FarmReportManager() {
     const fetchReports = async () => {
         setLoading(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get('http://localhost:5001/api/reports', {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -52,7 +52,7 @@ export default function FarmReportManager() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             await axios.post('http://localhost:5001/api/reports', {
                 title,
                 content,

@@ -8,7 +8,7 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword
 } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth, googleProvider, getFirebaseAuth, getGoogleProvider } from '@/lib/firebase';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -46,7 +46,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Handle Firebase Auth State Changes
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        // Lazy-init Firebase auth in browser; if Firebase isn't configured, don't crash the app.
+        const a = getFirebaseAuth();
+        if (!a) {
+            setUser(null);
+            setLoading(false);
+            return;
+        }
+
+        const unsubscribe = onAuthStateChanged(a, async (firebaseUser) => {
             if (firebaseUser) {
                 try {
                     // Get freshly generated ID token
@@ -83,7 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 headers: {
                     Authorization: `Bearer ${token}`
                 },
-                timeout: 10000 // 10 second timeout
+                timeout: 30000 // 30 second timeout (increased for first-time sync)
             });
 
             if (response.data && response.data.user) {
@@ -113,11 +121,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const loginWithGoogle = async (role?: string) => {
         try {
             // Check if Firebase is properly configured
-            if (!auth) {
+            const a = getFirebaseAuth();
+            const provider = getGoogleProvider();
+            if (!a || !provider) {
                 throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra cấu hình Firebase.");
             }
 
-            const result = await signInWithPopup(auth, googleProvider);
+            const result = await signInWithPopup(a, provider);
             const token = await result.user.getIdToken();
 
             // Explicitly sync with the selected role
@@ -144,7 +154,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const registerWithEmail = async (email: string, password: string, role?: string, fullName?: string) => {
         try {
             // Check if Firebase is properly configured
-            if (!auth) {
+            const a = getFirebaseAuth();
+            if (!a) {
                 throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra cấu hình Firebase.");
             }
 
@@ -152,7 +163,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 throw new Error("Vui lòng nhập họ và tên.");
             }
 
-            const result = await createUserWithEmailAndPassword(auth, email, password);
+            const result = await createUserWithEmailAndPassword(a, email, password);
             const token = await result.user.getIdToken();
 
             await syncUserWithBackend(token, role, fullName);
@@ -180,7 +191,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const loginWithEmail = async (email: string, password: string, role?: string) => {
         try {
             // Check if Firebase is properly configured
-            if (!auth) {
+            const a = getFirebaseAuth();
+            if (!a) {
                 throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra cấu hình Firebase.");
             }
 
@@ -188,7 +200,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 throw new Error("Vui lòng nhập đầy đủ email và mật khẩu.");
             }
 
-            const result = await signInWithEmailAndPassword(auth, email, password);
+            const result = await signInWithEmailAndPassword(a, email, password);
             const token = await result.user.getIdToken();
 
             await syncUserWithBackend(token, role);
@@ -219,7 +231,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const logout = async () => {
         try {
-            await firebaseSignOut(auth);
+            const a = getFirebaseAuth();
+            if (a) await firebaseSignOut(a);
             setUser(null);
             router.push('/login');
         } catch (error) {

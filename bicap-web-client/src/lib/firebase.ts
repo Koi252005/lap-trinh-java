@@ -23,7 +23,8 @@ Object.entries(requiredEnvVars).forEach(([key, value]) => {
 });
 
 if (missingVars.length > 0 && typeof window !== 'undefined') {
-    console.error('❌ Firebase Configuration Error:', {
+    // Use warn (not error) to avoid Next.js dev overlay blocking the UI
+    console.warn('⚠️ Firebase Configuration Warning:', {
         message: 'Firebase environment variables are missing or not configured properly.',
         missing: missingVars,
         instructions: 'Please configure Firebase in your .env file. See SETUP_DOCKER.md for instructions.',
@@ -40,28 +41,57 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-ZVDJEQN2Y4"
 };
 
-// Initialize Firebase (prevent multiple initializations)
-let app: FirebaseApp;
-let auth: Auth;
-let storage: FirebaseStorage;
-let googleProvider: GoogleAuthProvider;
+// IMPORTANT:
+// - Do NOT initialize Firebase during SSR / build-time prerender.
+// - Only initialize in the browser, and avoid throwing at import-time.
 
-try {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    auth = getAuth(app);
-    storage = getStorage(app);
-    googleProvider = new GoogleAuthProvider();
-} catch (error: any) {
-    console.error('❌ Firebase Initialization Error:', error);
-    if (typeof window !== 'undefined') {
-        console.error('Firebase config:', {
-            apiKey: firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 10)}...` : 'MISSING',
-            authDomain: firebaseConfig.authDomain || 'MISSING',
-            projectId: firebaseConfig.projectId || 'MISSING',
-        });
-    }
-    // Re-throw to prevent silent failures
-    throw new Error(`Firebase initialization failed: ${error.message}. Please check your Firebase configuration in .env file.`);
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let storage: FirebaseStorage | undefined;
+let googleProvider: GoogleAuthProvider | undefined;
+
+function canInitFirebaseInBrowser() {
+    if (typeof window === "undefined") return false;
+    if (missingVars.length > 0) return false;
+    return true;
 }
 
+function initFirebaseClientIfNeeded() {
+    if (!canInitFirebaseInBrowser()) return;
+    if (app && auth && storage && googleProvider) return;
+
+    try {
+        app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+        auth = getAuth(app);
+        storage = getStorage(app);
+        googleProvider = new GoogleAuthProvider();
+    } catch (error: unknown) {
+        // warn to avoid Next.js dev overlay blocking the UI
+        console.warn("⚠️ Firebase Initialization Warning:", error);
+        // Keep exports undefined so UI can show a config warning instead of crashing builds.
+        app = undefined;
+        auth = undefined;
+        storage = undefined;
+        googleProvider = undefined;
+    }
+}
+
+// Lazy exports (safe on server; initialize only in browser)
+export function getFirebaseAuth() {
+    initFirebaseClientIfNeeded();
+    return auth;
+}
+
+export function getFirebaseStorage() {
+    initFirebaseClientIfNeeded();
+    return storage;
+}
+
+export function getGoogleProvider() {
+    initFirebaseClientIfNeeded();
+    return googleProvider;
+}
+
+// Back-compat named exports used across the app
+initFirebaseClientIfNeeded();
 export { auth, storage, googleProvider };

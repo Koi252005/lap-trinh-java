@@ -54,7 +54,7 @@ export default function FarmOrderManager() {
 
     const fetchFarms = async () => {
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -73,7 +73,7 @@ export default function FarmOrderManager() {
     const fetchOrders = async (farmId: number) => {
         setLoading(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get(`http://localhost:5001/api/orders/farm/${farmId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -92,7 +92,7 @@ export default function FarmOrderManager() {
         }
 
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             await axios.put(`http://localhost:5001/api/orders/${orderId}/status`, { status: newStatus }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -108,7 +108,7 @@ export default function FarmOrderManager() {
         if (!confirm('Bạn có muốn liên hệ đơn vị vận chuyển đến lấy hàng?')) return;
 
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             // Call API with minimal data (just orderId)
             await axios.post('http://localhost:5001/api/shipments', {
                 orderId: orderId,

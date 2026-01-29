@@ -41,20 +41,25 @@ app.use((req, res, next) => {
 
 // Hàm khởi tạo hệ thống
 const startServer = async () => {
+  // Start server ngay lập tức, không chờ database
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+  });
+
+  // Kết nối Database trong background (không block server)
   try {
-    // 1. Kết nối Database
     await connectDB();
-
-    // 2. Đồng bộ bảng (Tạo bảng Users nếu chưa có)
-    await initModels();
-
-    // 3. Chạy Server
-    const PORT = process.env.PORT || 5001;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
-    });
+    // Nếu kết nối thành công, đồng bộ bảng
+    try {
+      await initModels();
+      console.log('✅ Database models initialized');
+    } catch (modelError) {
+      console.warn('⚠️  Model initialization failed:', modelError.message);
+    }
   } catch (error) {
-    console.error('Không thể khởi động server:', error);
+    console.error('❌ Database connection failed (server still running):', error.message);
+    console.log('⚠️  Server running in degraded mode - some features may not work');
   }
 };
 

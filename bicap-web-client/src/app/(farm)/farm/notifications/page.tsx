@@ -26,7 +26,7 @@ export default function NotificationsPage() {
     const fetchNotifications = async () => {
         setLoading(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get('http://localhost:5001/api/notifications', {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -40,7 +40,7 @@ export default function NotificationsPage() {
 
     const markAsRead = async (id: number) => {
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             await axios.put(`http://localhost:5001/api/notifications/${id}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });

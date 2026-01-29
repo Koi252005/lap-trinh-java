@@ -45,7 +45,7 @@ export default function FarmInfoPage() {
     const fetchFarms = async () => {
         setLoading(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             if (!token) return;
 
             const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
@@ -102,7 +102,7 @@ export default function FarmInfoPage() {
         setError('');
 
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             if (!token) throw new Error("Vui lòng đăng nhập lại");
 
             if (editingFarm) {

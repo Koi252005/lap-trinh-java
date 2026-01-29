@@ -32,7 +32,7 @@ export default function FarmMonitoringPage() {
         if (!user) return;
         const fetchFarms = async () => {
             try {
-                const token = await auth.currentUser?.getIdToken();
+                const token = await auth?.currentUser?.getIdToken();
                 const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -56,7 +56,7 @@ export default function FarmMonitoringPage() {
 
         const fetchData = async () => {
             try {
-                const token = await auth.currentUser?.getIdToken();
+                const token = await auth?.currentUser?.getIdToken();
                 const resCurrent = await axios.get(`http://localhost:5001/api/monitoring/current/${selectedFarmId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });

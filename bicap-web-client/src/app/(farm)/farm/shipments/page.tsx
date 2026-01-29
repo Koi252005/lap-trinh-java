@@ -51,7 +51,7 @@ export default function FarmShipmentManager() {
 
     const fetchFarms = async () => {
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -70,7 +70,7 @@ export default function FarmShipmentManager() {
     const fetchShipments = async (farmId: number) => {
         setLoading(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get(`http://localhost:5001/api/shipments/farm/${farmId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });

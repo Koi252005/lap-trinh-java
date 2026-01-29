@@ -60,7 +60,7 @@ export default function FarmProductManager() {
 
     const fetchFarms = async () => {
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -79,7 +79,7 @@ export default function FarmProductManager() {
     const fetchProducts = async (farmId: number) => {
         setLoading(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get(`http://localhost:5001/api/products/farm/${farmId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -93,7 +93,7 @@ export default function FarmProductManager() {
 
     const fetchCompletedSeasons = async (farmId: number) => {
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get(`http://localhost:5001/api/seasons/farm/${farmId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -109,7 +109,7 @@ export default function FarmProductManager() {
         e.preventDefault();
         setPosting(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             await axios.post('http://localhost:5001/api/products', {
                 name: productName,
                 seasonId: selectedSeasonId ? Number(selectedSeasonId) : null,

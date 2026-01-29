@@ -54,7 +54,7 @@ export default function FarmPage() {
         const initData = async () => {
             if (!user) return;
             try {
-                const token = await auth.currentUser?.getIdToken();
+                const token = await auth?.currentUser?.getIdToken();
                 const headers = { Authorization: `Bearer ${token}` };
 
                 const [farmRes, meRes] = await Promise.all([
@@ -85,6 +85,7 @@ export default function FarmPage() {
         if (user) {
             initData();
         } else {
+            if (!auth) return;
             const unsubscribe = auth.onAuthStateChanged((u) => {
                 if (u) {
                     initData();
@@ -104,7 +105,7 @@ export default function FarmPage() {
             // but we could have a `statsLoading` state.
 
             try {
-                const token = await auth.currentUser?.getIdToken();
+                const token = await auth?.currentUser?.getIdToken();
                 const headers = { Authorization: `Bearer ${token}` };
 
                 // Pass farmId query param
@@ -128,7 +129,7 @@ export default function FarmPage() {
         const fetchGroupedTasks = async () => {
             if (!selectedFarm) return;
             try {
-                const token = await auth.currentUser?.getIdToken();
+                const token = await auth?.currentUser?.getIdToken();
                 // 1. Fetch Active Seasons
                 const seasonRes = await axios.get(`http://localhost:5001/api/seasons/farm/${selectedFarm.id}?status=active`, {
                     headers: { Authorization: `Bearer ${token}` }
@@ -341,7 +342,7 @@ export default function FarmPage() {
                                                             s.id === season.id ? { ...s, tasks: s.tasks.filter(t => t.id !== task.id) } : s
                                                         ));
                                                         try {
-                                                            const token = await auth.currentUser?.getIdToken();
+                                                            const token = await auth?.currentUser?.getIdToken();
                                                             await axios.put(`http://localhost:5001/api/tasks/${task.id}/toggle`, {}, {
                                                                 headers: { Authorization: `Bearer ${token}` }
                                                             });

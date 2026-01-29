@@ -1,0 +1,4 @@
+[2026-01-29T12:26:33.418Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-01-29T12:26:33.426Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-01-29T12:27:08.015Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-01-29T13:11:36.417Z] Auth Error: Decoding Firebase ID token failed. Make sure you passed the entire string JWT which represents an ID token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.
