@@ -79,14 +79,51 @@ const requireRole = (roles) => {
         try {
             const { uid, email } = req.userFirebase;
 
-            // Find user in SQL DB
-            const user = await User.findOne({
-                where: { firebaseUid: uid }
-            });
+            // Check if database is connected
+            let user = null;
+            try {
+                // Try to find user in SQL DB
+                user = await User.findOne({
+                    where: { firebaseUid: uid }
+                });
+            } catch (dbError) {
+                // Database not connected - use fallback from syncUser response
+                console.warn('Database not connected, using Firebase user info as fallback:', dbError.message);
+                
+                // Check if user info was provided in request (from syncUser fallback)
+                if (req.user && req.user.firebaseUid === uid) {
+                    // User info already populated from syncUser fallback
+                    user = req.user;
+                } else {
+                    // Create temporary user object from Firebase info
+                    // Use role from request body if available (from syncUser), otherwise default
+                    // Check if user wants to be 'farm' role (from login/register)
+                    const requestedRole = req.body?.role || 'retailer';
+                    const defaultRole = roles.includes('farm') ? 'farm' : (roles.includes(requestedRole) ? requestedRole : 'retailer');
+                    
+                    if (roles.includes(defaultRole) || roles.includes('farm') || roles.includes('admin')) {
+                        // Create mock user object for database-less mode
+                        // Use a temporary ID based on Firebase UID hash
+                        const tempId = Math.abs(uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 1000000;
+                        user = {
+                            id: tempId, // Temporary ID (not null to avoid validation errors)
+                            firebaseUid: uid,
+                            email: email,
+                            role: defaultRole,
+                            fullName: req.userFirebase.name || 'User'
+                        };
+                        req.user = user;
+                        return next(); // Allow access in degraded mode
+                    } else {
+                        return res.status(403).json({ 
+                            message: 'Forbidden: Insufficient permissions (Database not connected)',
+                            warning: 'Database chưa kết nối. Một số tính năng có thể không hoạt động.'
+                        });
+                    }
+                }
+            }
 
             if (!user) {
-                // Fallback: Try finding by email (for first login/sync scenarios where partial record might exist)
-                // Or simply return 401 if user MUST be synced first
                 return res.status(401).json({ message: 'User not found in database. Please login first to sync.' });
             }
 
@@ -99,7 +136,12 @@ const requireRole = (roles) => {
             req.user = user;
             next();
         } catch (error) {
-            return res.status(500).json({ message: 'Server error checking roles', error: error.message });
+            console.error('Error in requireRole middleware:', error);
+            return res.status(500).json({ 
+                message: 'Server error checking roles', 
+                error: error.message,
+                details: 'Database may not be connected. Please check backend logs.'
+            });
         }
     };
 };

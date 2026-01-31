@@ -149,9 +149,24 @@ export default function MarketplacePage() {
     const [buying, setBuying] = useState(false);
 
     useEffect(() => {
-        axios.get('http://localhost:5001/api/products')
-            .then(res => setProducts(res.data))
-            .catch(err => console.error(err))
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+        axios.get(`${apiUrl}/public/products`)
+            .then(res => {
+                // API trả về { products: [...], pagination: {...} }
+                if (res.data && res.data.products) {
+                    setProducts(res.data.products);
+                } else if (Array.isArray(res.data)) {
+                    // Fallback nếu API trả về array trực tiếp
+                    setProducts(res.data);
+                } else {
+                    console.warn('Unexpected API response format:', res.data);
+                    setProducts([]);
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching products:', err);
+                setProducts([]);
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -160,9 +175,42 @@ export default function MarketplacePage() {
                               p.farm.name.toLowerCase().includes(searchTerm.toLowerCase());
         
         let matchesCategory = true;
-        if (selectedCategory === 'Rau củ') matchesCategory = p.name.toLowerCase().includes('rau') || p.name.toLowerCase().includes('cải') || p.name.toLowerCase().includes('cà');
-        if (selectedCategory === 'Trái cây') matchesCategory = p.name.toLowerCase().includes('dưa') || p.name.toLowerCase().includes('dâu') || p.name.toLowerCase().includes('cam');
-        if (selectedCategory === 'Củ quả') matchesCategory = p.name.toLowerCase().includes('khoai') || p.name.toLowerCase().includes('sắn');
+        const productName = p.name.toLowerCase();
+        
+        if (selectedCategory === 'Rau củ') {
+            matchesCategory = productName.includes('rau') || 
+                             productName.includes('cải') || 
+                             productName.includes('cà') ||
+                             productName.includes('đậu') ||
+                             productName.includes('bí') ||
+                             productName.includes('mướp') ||
+                             productName.includes('hành') ||
+                             productName.includes('ngò');
+        }
+        if (selectedCategory === 'Trái cây') {
+            matchesCategory = productName.includes('dưa') || 
+                             productName.includes('dâu') || 
+                             productName.includes('cam') ||
+                             productName.includes('chuối') ||
+                             productName.includes('xoài') ||
+                             productName.includes('ổi') ||
+                             productName.includes('thanh long') ||
+                             productName.includes('bưởi') ||
+                             productName.includes('dứa') ||
+                             productName.includes('sầu riêng') ||
+                             productName.includes('nhãn') ||
+                             productName.includes('chôm chôm') ||
+                             productName.includes('bơ');
+        }
+        if (selectedCategory === 'Củ quả') {
+            matchesCategory = productName.includes('khoai') || 
+                             productName.includes('sắn') ||
+                             productName.includes('củ') ||
+                             productName.includes('tỏi') ||
+                             productName.includes('gừng') ||
+                             productName.includes('nghệ') ||
+                             productName.includes('hành tây');
+        }
 
         return matchesSearch && matchesCategory;
     });
