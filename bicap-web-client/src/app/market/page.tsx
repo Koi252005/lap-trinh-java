@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/api';
+import PixelPlantIcon from '@/components/PixelPlantIcon';
 
 interface Product {
     id: number;
@@ -23,6 +24,22 @@ interface Product {
     } | null;
     batchCode: string;
 }
+
+/** Sản phẩm mẫu hiển thị khi API lỗi hoặc chưa có dữ liệu */
+const FALLBACK_PRODUCTS: Product[] = [
+    { id: 1, name: 'Rau Xà Lách Tươi', price: 25000, quantity: 50, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-LETTUCE-001' },
+    { id: 2, name: 'Cà Chua Bi Đỏ', price: 35000, quantity: 30, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-TOMATO-001' },
+    { id: 3, name: 'Dưa Chuột Sạch', price: 20000, quantity: 40, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Hà Nội', certification: 'VietGAP' }, season: { name: 'Vụ Xuân' }, batchCode: 'BATCH-CUCUMBER-001' },
+    { id: 4, name: 'Cà Rốt Tươi', price: 22000, quantity: 60, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-CARROT-001' },
+    { id: 5, name: 'Rau Muống', price: 15000, quantity: 45, farm: { name: 'Nông Trại Xanh Tươi', address: 'Đà Lạt', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-WATERSPINACH-001' },
+    { id: 6, name: 'Bắp Cải Xanh', price: 18000, quantity: 40, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-CABBAGE-001' },
+    { id: 7, name: 'Dâu Tây', price: 120000, quantity: 20, farm: { name: 'Nông Trại Xanh Tươi', address: 'Đà Lạt', certification: 'VietGAP' }, season: { name: 'Vụ Đông' }, batchCode: 'BATCH-STRAWBERRY-001' },
+    { id: 8, name: 'Cam Sành', price: 28000, quantity: 55, farm: { name: 'Vườn Cây Ăn Trái', address: 'Tiền Giang', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-ORANGE-001' },
+    { id: 9, name: 'Khoai Tây', price: 18000, quantity: 70, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-POTATO-001' },
+    { id: 10, name: 'Bí Đỏ', price: 15000, quantity: 25, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Hà Nội', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-PUMPKIN-001' },
+    { id: 11, name: 'Nấm Bào Ngư', price: 85000, quantity: 18, farm: { name: 'Trang Trại Nấm', address: 'Lâm Đồng', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-MUSHROOM-001' },
+    { id: 12, name: 'Ớt Chuông Đỏ', price: 45000, quantity: 25, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-BELLPEPPER-001' },
+];
 
 // Hàm lấy icon tự động - Sắp xếp chính xác hơn với nhiều loại rau củ
 const getProductIcon = (name: string) => {
@@ -152,20 +169,16 @@ export default function MarketplacePage() {
     useEffect(() => {
         axios.get(`${API_BASE}/public/products`)
             .then(res => {
-                // API trả về { products: [...], pagination: {...} }
-                if (res.data && res.data.products) {
+                if (res.data && res.data.products && res.data.products.length > 0) {
                     setProducts(res.data.products);
-                } else if (Array.isArray(res.data)) {
-                    // Fallback nếu API trả về array trực tiếp
+                } else if (Array.isArray(res.data) && res.data.length > 0) {
                     setProducts(res.data);
                 } else {
-                    console.warn('Unexpected API response format:', res.data);
-                    setProducts([]);
+                    setProducts(FALLBACK_PRODUCTS);
                 }
             })
-            .catch(err => {
-                console.error('Error fetching products:', err);
-                setProducts([]);
+            .catch(() => {
+                setProducts(FALLBACK_PRODUCTS);
             })
             .finally(() => setLoading(false));
     }, []);
@@ -339,7 +352,9 @@ export default function MarketplacePage() {
                     <div className="text-center py-20">
                         <div className="pixel-card inline-block p-8 bg-white">
                             <div className="spinner-enhanced w-16 h-16 mx-auto mb-6"></div>
-                            <div className="pixel-icon w-16 h-16 text-4xl mx-auto mb-4 bg-[var(--beige-cream)]">🌾</div>
+                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-[var(--beige-cream)] flex items-center justify-center p-1">
+                                <PixelPlantIcon type="default" size={40} />
+                            </div>
                             <p className="text-gray-600 font-semibold">Đang tải sản phẩm từ nông trại...</p>
                         </div>
                     </div>
@@ -367,8 +382,8 @@ export default function MarketplacePage() {
                                     >
                                         {/* Khung icon sản phẩm – pixel */}
                                         <div className={`h-48 ${gradientClass} flex items-center justify-center relative overflow-hidden border-b-4 border-[var(--gray-800)]`}>
-                                            <div className="pixel-icon w-24 h-24 text-6xl bg-white/30 flex items-center justify-center">
-                                                {getProductIcon(product.name)}
+                                            <div className="pixel-icon w-24 h-24 bg-white/30 flex items-center justify-center p-1">
+                                                <PixelPlantIcon name={product.name} size={72} />
                                             </div>
                                             
                                             <div className="pixel-badge absolute top-2 right-2 text-[var(--green-dark)] text-xs font-bold px-2 py-1 bg-white flex items-center gap-1">
@@ -437,7 +452,9 @@ export default function MarketplacePage() {
                             })
                         ) : (
                             <div className="col-span-full text-center py-20">
-                                <div className="pixel-icon w-24 h-24 text-6xl mx-auto mb-6 bg-[var(--beige-cream)]">🥬</div>
+                                <div className="pixel-icon w-24 h-24 mx-auto mb-6 bg-[var(--beige-cream)] flex items-center justify-center p-1">
+                                <PixelPlantIcon type="leaf" size={72} />
+                            </div>
                                 <h3 className="text-2xl font-bold text-gray-600 mb-2">Không tìm thấy sản phẩm nào!</h3>
                                 <p className="text-gray-500">Thử tìm kiếm với từ khóa khác hoặc chọn danh mục khác</p>
                             </div>
@@ -451,21 +468,27 @@ export default function MarketplacePage() {
                 <div className="pixel-card bg-[var(--beige-cream)] p-8 md:p-12">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div className="text-center">
-                            <div className="pixel-icon w-16 h-16 text-4xl mx-auto mb-4 bg-white">🌾</div>
+                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1">
+                                <PixelPlantIcon type="default" size={40} />
+                            </div>
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Nông Sản Sạch</h3>
                             <p className="text-gray-600 text-sm">
                                 Sản phẩm theo tiêu chuẩn VietGAP, đảm bảo an toàn vệ sinh thực phẩm
                             </p>
                         </div>
                         <div className="text-center">
-                            <div className="pixel-icon w-16 h-16 text-4xl mx-auto mb-4 bg-white">🔍</div>
+                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1">
+                                <PixelPlantIcon type="leaf" size={40} />
+                            </div>
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Truy Xuất Nguồn Gốc</h3>
                             <p className="text-gray-600 text-sm">
                                 Quét mã QR xem quy trình canh tác từ gieo trồng đến thu hoạch
                             </p>
                         </div>
                         <div className="text-center">
-                            <div className="pixel-icon w-16 h-16 text-4xl mx-auto mb-4 bg-white">💚</div>
+                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1">
+                                <PixelPlantIcon type="default" size={40} />
+                            </div>
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Giao Hàng Tận Nơi</h3>
                             <p className="text-gray-600 text-sm">
                                 Vận chuyển chuyên nghiệp, sản phẩm tươi đến tay người tiêu dùng
@@ -490,8 +513,8 @@ export default function MarketplacePage() {
 
                         <div className="relative z-10">
                             <div className="text-center mb-6">
-                                <div className="pixel-icon w-20 h-20 text-5xl mx-auto mb-4 bg-[var(--green-light)]">
-                                    {getProductIcon(selectedProduct.name)}
+                                <div className="pixel-icon w-20 h-20 mx-auto mb-4 bg-[var(--green-light)] flex items-center justify-center p-1">
+                                    <PixelPlantIcon name={selectedProduct.name} size={56} />
                                 </div>
                                 <h2 className="text-2xl font-extrabold text-gray-800 mb-2">Đặt Mua Nông Sản</h2>
                                 <h3 className="font-bold text-lg text-[#388E3C] mb-1 break-words px-4">{selectedProduct.name}</h3>

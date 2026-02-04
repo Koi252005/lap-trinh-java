@@ -48,9 +48,81 @@ const sampleProducts = [
     name: 'Cà Rốt Tươi',
     batchCode: 'BATCH-CARROT-001',
     quantity: 60,
-    price: 22000, // 22,000 VND/kg
+    price: 22000,
     status: 'available',
     description: 'Cà rốt tươi ngon, giàu beta-carotene, tốt cho mắt'
+  },
+  {
+    name: 'Rau Muống',
+    batchCode: 'BATCH-WATERSPINACH-001',
+    quantity: 45,
+    price: 15000,
+    status: 'available',
+    description: 'Rau muống tươi, giòn ngọt, trồng sạch'
+  },
+  {
+    name: 'Bắp Cải Xanh',
+    batchCode: 'BATCH-CABBAGE-001',
+    quantity: 40,
+    price: 18000,
+    status: 'available',
+    description: 'Bắp cải xanh tươi, giàu vitamin K'
+  },
+  {
+    name: 'Dâu Tây',
+    batchCode: 'BATCH-STRAWBERRY-001',
+    quantity: 20,
+    price: 120000,
+    status: 'available',
+    description: 'Dâu tây Đà Lạt, ngọt thơm'
+  },
+  {
+    name: 'Cam Sành',
+    batchCode: 'BATCH-ORANGE-001',
+    quantity: 55,
+    price: 28000,
+    status: 'available',
+    description: 'Cam sành ngọt, nhiều nước, giàu vitamin C'
+  },
+  {
+    name: 'Khoai Tây',
+    batchCode: 'BATCH-POTATO-001',
+    quantity: 70,
+    price: 18000,
+    status: 'available',
+    description: 'Khoai tây tươi, không mầm'
+  },
+  {
+    name: 'Cải Thảo',
+    batchCode: 'BATCH-BOKCHOY-001',
+    quantity: 35,
+    price: 20000,
+    status: 'available',
+    description: 'Cải thảo tươi, lá xanh non'
+  },
+  {
+    name: 'Ớt Hiểm',
+    batchCode: 'BATCH-CHILI-001',
+    quantity: 28,
+    price: 65000,
+    status: 'available',
+    description: 'Ớt hiểm cay nồng, tươi'
+  },
+  {
+    name: 'Bí Đỏ',
+    batchCode: 'BATCH-PUMPKIN-001',
+    quantity: 25,
+    price: 15000,
+    status: 'available',
+    description: 'Bí đỏ ngọt, giàu vitamin A'
+  },
+  {
+    name: 'Nấm Bào Ngư',
+    batchCode: 'BATCH-MUSHROOM-001',
+    quantity: 18,
+    price: 85000,
+    status: 'available',
+    description: 'Nấm bào ngư tươi, sạch'
   }
 ];
 
