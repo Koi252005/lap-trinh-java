@@ -124,25 +124,23 @@ function LoginForm() {
 
     return (
         <div className="w-full">
-            <h2 className="text-center text-3xl font-extrabold mb-2 text-gray-800 dark:text-white">
+            <h2 className="text-center text-2xl font-extrabold mb-2 text-neon-teal">
                 {isRegistering ? 'Tạo Tài Khoản Mới' : 'Đăng Nhập'}
             </h2>
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+            <p className="text-center text-sm text-gray-400 mb-6">
                 {isRegistering ? 'Tham gia hệ thống BICAP ngay hôm nay' : 'Chào mừng bạn trở lại'}
             </p>
 
-            {/* Role Selector - Enhanced */}
+            {/* Role Selector – pixel 80s */}
             <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#388E3C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                <label className="block text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                    <span className="text-neon-teal">◆</span>
                     Chọn Vai Trò {isRegistering ? '(Bắt buộc)' : '(Test Mode)'}
                 </label>
                 <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
-                    className="block w-full rounded-xl border-2 border-gray-200 bg-white py-3 px-4 shadow-sm focus:border-[#388E3C] focus:outline-none focus:ring-2 focus:ring-[#388E3C] focus:ring-offset-2 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all font-medium"
+                    className="pixel-input block w-full bg-[var(--retro-dark)] text-white py-3 px-4 border-[var(--neon-teal)] font-medium focus:outline-none"
                 >
                     {roles.map((role) => (
                         <option key={role.id} value={role.id}>
@@ -153,10 +151,8 @@ function LoginForm() {
             </div>
 
             {error && (
-                <div className="mb-6 bg-red-50 border-2 border-red-200 text-red-700 p-4 rounded-xl text-sm flex items-start gap-3 animate-fadeIn">
-                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                <div className="pixel-box mb-6 bg-red-950/50 border-red-500 text-red-300 p-4 text-sm flex items-start gap-3 animate-fadeIn">
+                    <span className="text-red-400">⚠</span>
                     <span>{error}</span>
                 </div>
             )}
@@ -164,32 +160,32 @@ function LoginForm() {
             <form onSubmit={handleEmailAuth} className="space-y-5 mb-6">
                 {isRegistering && (
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Họ và tên</label>
+                        <label className="block text-sm font-semibold text-gray-300 mb-2">Họ và tên</label>
                         <input
                             type="text"
                             placeholder="Nhập họ và tên của bạn"
                             required={isRegistering}
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            className="block w-full rounded-xl border-2 border-gray-200 px-4 py-3 shadow-sm focus:border-[#388E3C] focus:outline-none focus:ring-2 focus:ring-[#388E3C] focus:ring-offset-2 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all"
+                            className="pixel-input block w-full bg-[var(--retro-dark)] text-white px-4 py-3 border-[var(--neon-teal)] focus:outline-none"
                         />
                     </div>
                 )}
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Email</label>
                     <input
                         type="email"
                         placeholder="your.email@example.com"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="block w-full rounded-xl border-2 border-gray-200 px-4 py-3 shadow-sm focus:border-[#388E3C] focus:outline-none focus:ring-2 focus:ring-[#388E3C] focus:ring-offset-2 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all"
+                        className="pixel-input block w-full bg-[var(--retro-dark)] text-white px-4 py-3 border-[var(--neon-teal)] focus:outline-none"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Mật khẩu</label>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Mật khẩu</label>
                     <input
                         type="password"
                         placeholder="Tối thiểu 6 ký tự"
@@ -197,14 +193,15 @@ function LoginForm() {
                         minLength={6}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="block w-full rounded-xl border-2 border-gray-200 px-4 py-3 shadow-sm focus:border-[#388E3C] focus:outline-none focus:ring-2 focus:ring-[#388E3C] focus:ring-offset-2 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all"
+                        className="pixel-input block w-full bg-[var(--retro-dark)] text-white px-4 py-3 border-[var(--neon-teal)] focus:outline-none"
                     />
                 </div>
 
                 <button
                     type="submit"
                     disabled={loading}
-                    className="flex w-full justify-center items-center gap-2 rounded-xl border border-transparent bg-gradient-to-r from-[#388E3C] to-[#7CB342] py-3.5 px-4 text-sm font-bold text-white shadow-lg hover:from-[#2E7D32] hover:to-[#388E3C] focus:outline-none focus:ring-2 focus:ring-[#388E3C] focus:ring-offset-2 disabled:opacity-50 transition-all btn-glow relative overflow-hidden"
+                    className="pixel-btn flex w-full justify-center items-center gap-2 py-3.5 px-4 text-sm font-bold text-[var(--retro-dark)] disabled:opacity-50 transition-colors border-[var(--gray-800)]"
+                    style={{ background: 'var(--neon-teal)', boxShadow: '4px 4px 0 var(--gray-800)' }}
                 >
                     {loading ? (
                         <>
@@ -229,17 +226,17 @@ function LoginForm() {
                 <>
                     <div className="relative mb-6">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t-2 border-gray-200 dark:border-gray-600" />
+                            <div className="w-full border-t-2 border-gray-600" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="bg-white dark:bg-gray-800 px-4 text-gray-500 font-medium">Hoặc tiếp tục với</span>
+                            <span className="bg-[var(--retro-purple)] px-4 text-gray-400 font-medium">Hoặc tiếp tục với</span>
                         </div>
                     </div>
 
                     <button
                         onClick={handleGoogleLogin}
                         disabled={loading}
-                        className="flex w-full justify-center items-center gap-3 rounded-xl border-2 border-gray-200 bg-white dark:bg-gray-700 py-3.5 px-4 text-sm font-semibold text-gray-700 dark:text-white shadow-md hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#388E3C] focus:ring-offset-2 disabled:opacity-50 transition-all"
+                        className="pixel-btn flex w-full justify-center items-center gap-3 bg-[var(--retro-dark)] border-[var(--neon-teal)] py-3.5 px-4 text-sm font-semibold text-white hover:bg-[var(--retro-purple)] disabled:opacity-50 transition-colors"
                     >
                         <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
                             <path
@@ -269,15 +266,16 @@ function LoginForm() {
             )}
 
             {selectedRole !== 'admin' && (
-                <div className="mt-6 text-center pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="mt-6 text-center pt-6 border-t-2 border-gray-600">
+                    <p className="text-sm text-gray-400">
                         {isRegistering ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}
                         <button
+                            type="button"
                             onClick={() => {
                                 setIsRegistering(!isRegistering);
                                 setError('');
                             }}
-                            className="ml-2 font-bold text-[#388E3C] hover:text-[#2E7D32] transition-colors"
+                            className="ml-2 font-bold text-neon-teal hover:underline transition-colors"
                         >
                             {isRegistering ? 'Đăng nhập ngay' : 'Tạo tài khoản mới'}
                         </button>

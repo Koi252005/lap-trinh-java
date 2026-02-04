@@ -180,15 +180,18 @@ export default function Home() {
 
                 {/* Main Content */}
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-                    {/* Main Heading – font chữ bình thường */}
+                    {/* Main Heading – Chào mừng BICAP, theme 80s pixel */}
                     <ScrollAnimation direction="up" delay={100}>
+                        <p className="text-sm font-bold tracking-widest text-[var(--neon-teal)] mb-2 uppercase" style={{ textShadow: '0 0 8px var(--neon-teal)' }}>
+                            Chào mừng đến
+                        </p>
                         <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
-                            <span className="block pixel-icon w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 text-4xl md:text-5xl bg-[var(--beige-cream)]">🌾</span>
-                            <span className="block bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">
-                                Nông Nghiệp Sạch
+                            <span className="block pixel-icon w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 text-4xl md:text-5xl bg-[var(--beige-cream)] border-[var(--gray-800)]">🌾</span>
+                            <span className="block text-[var(--green-dark)]">
+                                BICAP
                             </span>
-                            <span className="block text-xl md:text-2xl lg:text-3xl text-gray-700 mt-4 font-medium">
-                                Cho Tương Lai Tươi Sáng
+                            <span className="block text-xl md:text-2xl lg:text-3xl text-gray-700 mt-2 font-medium">
+                                Nông Nghiệp Sạch – Cho Tương Lai Tươi Sáng
                             </span>
                         </h1>
                     </ScrollAnimation>
