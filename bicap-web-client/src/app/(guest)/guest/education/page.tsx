@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import axios from "axios"; 
+import axios from "axios";
+import { API_BASE } from "@/lib/api"; 
 
 // Định nghĩa kiểu dữ liệu cho bài viết (để code nhắc lệnh thông minh hơn)
 interface Article {
@@ -20,7 +21,7 @@ export default function EducationPage() {
     const fetchArticles = async () => {
       try {
         // Gọi API bằng Axios
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/articles`);
+        const response = await axios.get(`${API_BASE}/articles`);
         setArticles(response.data);
       } catch (err) {
         console.error("Lỗi API:", err);

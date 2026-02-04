@@ -116,7 +116,7 @@ export default function Home() {
             {/* ============================================
                 HERO SECTION - First Impression
                 ============================================ */}
-            <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50">
+            <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--beige-cream)] via-[var(--green-light)]/20 to-[var(--green-fresh)]/30 theme-pixel">
                 {/* Animated Background */}
                 <div className="absolute inset-0">
                     <div 
@@ -180,14 +180,14 @@ export default function Home() {
 
                 {/* Main Content */}
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-                    {/* Main Heading */}
+                    {/* Main Heading – font chữ bình thường */}
                     <ScrollAnimation direction="up" delay={100}>
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold mb-6 leading-tight">
-                            <span className="block text-6xl md:text-8xl mb-4">🌾</span>
-                            <span className="block bg-gradient-to-r from-green-600 via-emerald-600 to-lime-600 bg-clip-text text-transparent animate-gradient">
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
+                            <span className="block pixel-icon w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 text-4xl md:text-5xl bg-[var(--beige-cream)]">🌾</span>
+                            <span className="block bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">
                                 Nông Nghiệp Sạch
                             </span>
-                            <span className="block text-4xl md:text-5xl lg:text-6xl text-gray-700 mt-4 font-light">
+                            <span className="block text-xl md:text-2xl lg:text-3xl text-gray-700 mt-4 font-medium">
                                 Cho Tương Lai Tươi Sáng
                             </span>
                         </h1>
@@ -209,24 +209,21 @@ export default function Home() {
                         <div className="flex flex-col sm:flex-row justify-center gap-6 mb-16">
                             <Link 
                                 href="/market" 
-                                className="group relative px-10 py-5 btn-gradient-animated text-white font-bold text-lg rounded-2xl shadow-glow hover-lift flex items-center justify-center gap-3 overflow-hidden btn-3d"
+                                className="pixel-btn group relative px-10 py-5 bg-[var(--green-fresh)] text-white font-bold text-lg flex items-center justify-center gap-3 hover:bg-[var(--green-dark)] transition-colors"
                             >
-                                <span className="relative z-10 flex items-center gap-3">
-                                    <span className="text-3xl animate-scale-bounce">🏪</span>
-                                    <span className="text-shimmer">Khám Phá Chợ Nông Sản</span>
-                                    <svg className="w-6 h-6 group-hover:translate-x-3 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                    </svg>
-                                </span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-green-700 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <span className="pixel-icon w-10 h-10 flex items-center justify-center text-xl bg-[var(--green-dark)]">🏪</span>
+                                <span>Khám Phá Chợ Nông Sản</span>
+                                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
                             </Link>
                             <Link 
                                 href="/login?role=guest" 
-                                className="group relative px-10 py-5 glass-strong border-2 border-green-600 text-green-600 font-bold text-lg rounded-2xl shadow-3d hover-lift btn-3d flex items-center justify-center gap-3 transition-all duration-300"
+                                className="pixel-btn px-10 py-5 bg-[var(--beige-cream)] border-[var(--gray-800)] text-gray-800 font-bold text-lg flex items-center justify-center gap-3 hover:bg-[var(--gray-100)] transition-colors"
                             >
-                                <span className="text-3xl group-hover:rotate-12 transition-transform duration-300">🔍</span>
-                                <span className="group-hover:text-green-700 transition-colors">Truy Xuất Nguồn Gốc</span>
-                                <svg className="w-6 h-6 group-hover:translate-x-3 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <span className="pixel-icon w-10 h-10 flex items-center justify-center text-xl bg-white">🔍</span>
+                                <span>Truy Xuất Nguồn Gốc</span>
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
                             </Link>
@@ -239,9 +236,9 @@ export default function Home() {
                             {stats.map((stat, index) => (
                                 <div 
                                     key={index}
-                                    className="glass-strong p-6 rounded-2xl shadow-3d border border-green-100 hover-lift card-3d transition-all duration-300"
+                                    className="pixel-card glass-strong p-6 bg-white/90 hover-lift transition-all duration-300"
                                 >
-                                    <div className="text-5xl mb-3 animate-scale-bounce" style={{ animationDelay: `${index * 0.2}s` }}>{stat.icon}</div>
+                                    <div className="pixel-icon w-14 h-14 text-3xl mb-3 bg-white/80" style={{ animationDelay: `${index * 0.2}s` }}>{stat.icon}</div>
                                     <div className={`text-3xl font-extrabold ${stat.color} mb-2 text-glow`}>
                                         {stat.number}
                                     </div>
@@ -252,12 +249,12 @@ export default function Home() {
                     </ScrollAnimation>
                 </div>
 
-                {/* Scroll Indicator */}
+                {/* Scroll Indicator – pixel */}
                 <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce-slow">
                     <div className="flex flex-col items-center gap-2">
-                        <span className="text-sm text-gray-500 font-medium">Cuộn xuống</span>
-                        <div className="w-6 h-10 border-2 border-green-600 rounded-full flex justify-center">
-                            <div className="w-1 h-3 bg-green-600 rounded-full mt-2 animate-pulse"></div>
+                        <span className="text-sm text-gray-600 font-medium">Cuộn xuống</span>
+                        <div className="pixel-box w-6 h-10 flex justify-center bg-white/80">
+                            <div className="w-1 h-3 bg-[var(--green-dark)] mt-2 animate-pulse" style={{ boxShadow: '2px 2px 0 var(--gray-800)' }}></div>
                         </div>
                     </div>
                 </div>
@@ -270,13 +267,11 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <ScrollAnimation direction="up">
                         <div className="text-center mb-16">
-                            <div className="inline-block mb-4 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-bold">
+                            <div className="pixel-badge inline-block mb-4 px-4 py-2 bg-green-100 text-green-700 text-sm font-bold">
                                 Câu Chuyện Nông Dân
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
-                                <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                                    Những Người Làm Nông Thật Sự
-                                </span>
+                            <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-green-800">
+                                Những Người Làm Nông Thật Sự
                             </h2>
                             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                                 Lắng nghe những câu chuyện từ những nông dân đang sử dụng BICAP
@@ -287,9 +282,9 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {farmerStories.map((story, index) => (
                             <ScrollAnimation key={index} direction="up" delay={index * 100}>
-                                <div className="bg-white rounded-3xl shadow-3d p-8 hover-lift card-glow border border-green-100 card-3d">
+                                <div className="pixel-card bg-white p-8 hover-lift transition-all">
                                     <div className="text-center mb-6">
-                                        <div className="text-7xl mb-4">{story.image}</div>
+                                        <div className="pixel-icon w-20 h-20 text-5xl mx-auto mb-4 bg-[var(--beige-cream)]">{story.image}</div>
                                         <h3 className="text-2xl font-bold text-gray-800 mb-2">{story.name}</h3>
                                         <p className="text-green-600 font-semibold mb-1">{story.farm}</p>
                                         <p className="text-sm text-gray-500">{story.location}</p>
@@ -316,13 +311,11 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <ScrollAnimation direction="up">
                         <div className="text-center mb-16">
-                            <div className="inline-block mb-4 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-bold">
+                            <div className="pixel-badge inline-block mb-4 px-4 py-2 bg-emerald-100 text-emerald-700 text-sm font-bold">
                                 Tính Năng Nổi Bật
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
-                                <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                                    Công Nghệ Cho Nông Nghiệp
-                                </span>
+                            <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-green-800">
+                                Công Nghệ Cho Nông Nghiệp
                             </h2>
                             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                                 Những công cụ mạnh mẽ giúp nông dân quản lý tốt hơn, người tiêu dùng yên tâm hơn
@@ -333,8 +326,8 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {features.map((feature, index) => (
                             <ScrollAnimation key={index} direction="up" delay={index * 100}>
-                                <div className={`${feature.bgColor} rounded-3xl p-8 shadow-3d hover-lift card-glow border border-transparent hover:border-green-200 card-3d`}>
-                                    <div className={`w-20 h-20 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center text-5xl mb-6 shadow-colored transform hover:scale-110 hover:rotate-6 transition-all duration-300 animate-glow-pulse`}>
+                                <div className={`pixel-card ${feature.bgColor} p-8 hover-lift transition-all`}>
+                                    <div className={`pixel-icon w-20 h-20 bg-gradient-to-br ${feature.color} flex items-center justify-center text-4xl mb-6`}>
                                         {feature.icon}
                                     </div>
                                     <h3 className="text-2xl font-bold text-gray-800 mb-4">
@@ -357,20 +350,18 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <ScrollAnimation direction="up">
                         <div className="text-center mb-16">
-                            <div className="inline-block mb-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
+                            <div className="pixel-badge inline-block mb-4 px-4 py-2 bg-blue-100 text-blue-700 text-sm font-bold">
                                 Cách Thức Hoạt Động
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
-                                <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                                    Đơn Giản & Hiệu Quả
-                                </span>
+                            <h2 className="text-3xl md:text-4xl font-extrabold mb-4 text-gray-800">
+                                Đơn Giản & Hiệu Quả
                             </h2>
                         </div>
                     </ScrollAnimation>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
                         {/* Thanh xanh lá cây đi ngang qua tất cả các bước - chỉ hiển thị trên desktop */}
-                        <div className="hidden md:block absolute top-10 left-0 right-0 h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-green-500 rounded-full z-0"></div>
+                        <div className="hidden md:block absolute top-10 left-0 right-0 h-2 bg-[var(--green-fresh)] border-y-2 border-[var(--gray-800)] z-0"></div>
                         {[
                             { step: '1', icon: '🌱', title: 'Nông Dân Gieo Trồng', desc: 'Ghi chép quy trình canh tác trên hệ thống' },
                             { step: '2', icon: '📱', title: 'IoT Giám Sát', desc: 'Cảm biến tự động theo dõi điều kiện môi trường' },
@@ -380,10 +371,10 @@ export default function Home() {
                             <ScrollAnimation key={index} direction="up" delay={index * 100}>
                                 <div className="text-center relative z-10">
                                     <div className="relative inline-block mb-6">
-                                        <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-4xl shadow-xl">
+                                        <div className="pixel-icon w-20 h-20 bg-[var(--green-fresh)] flex items-center justify-center text-4xl">
                                             {item.icon}
                                         </div>
-                                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                                        <div className="pixel-badge absolute -top-2 -right-2 w-8 h-8 bg-[var(--green-dark)] text-white flex items-center justify-center text-sm font-bold">
                                             {item.step}
                                         </div>
                                     </div>
@@ -419,15 +410,17 @@ export default function Home() {
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Link 
                                 href="/login?role=farm" 
-                                className="px-8 py-4 glass-strong text-green-600 font-bold text-lg rounded-2xl shadow-glow hover-lift btn-3d transition-all duration-300"
+                                className="pixel-btn px-8 py-4 bg-[var(--beige-cream)] text-gray-800 font-bold text-lg hover:bg-[var(--gray-100)] transition-colors inline-flex items-center justify-center gap-2"
                             >
-                                🌱 Tôi Là Nông Dân
+                                <span className="pixel-icon w-8 h-8 text-lg flex items-center justify-center bg-white">🌱</span>
+                                Tôi Là Nông Dân
                             </Link>
                             <Link 
                                 href="/login?role=retailer" 
-                                className="px-8 py-4 bg-green-700/90 backdrop-blur-sm text-white font-bold text-lg rounded-2xl shadow-glow hover:bg-green-800/90 hover-lift btn-3d transition-all duration-300 border-2 border-white/30"
+                                className="pixel-btn px-8 py-4 bg-[var(--green-dark)] text-white font-bold text-lg hover:bg-[var(--gray-800)] transition-colors inline-flex items-center justify-center gap-2"
                             >
-                                🛒 Tôi Là Nhà Bán Lẻ
+                                <span className="pixel-icon w-8 h-8 text-lg flex items-center justify-center bg-[var(--green-fresh)]">🛒</span>
+                                Tôi Là Nhà Bán Lẻ
                             </Link>
                         </div>
                     </div>
@@ -463,9 +456,9 @@ export default function Home() {
                             <ScrollAnimation key={index} direction="up" delay={index * 100}>
                                 <Link 
                                     href={portal.href} 
-                                    className="block glass-strong rounded-xl shadow-3d p-6 hover-lift card-3d border border-gray-200 transition-all duration-300"
+                                    className="block pixel-card p-6 hover-lift transition-all bg-white/90"
                                 >
-                                    <div className={`w-16 h-16 bg-gradient-to-br ${portal.color} rounded-xl flex items-center justify-center text-4xl mb-4 shadow-colored transform hover:scale-110 hover:rotate-6 transition-all duration-300`}>
+                                    <div className={`pixel-icon w-16 h-16 bg-gradient-to-br ${portal.color} flex items-center justify-center text-3xl mb-4`}>
                                         {portal.icon}
                                     </div>
                                     <h3 className="text-lg font-bold text-gray-800 mb-2">
@@ -487,7 +480,7 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                         <div>
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                                <div className="pixel-icon w-12 h-12 bg-[var(--green-fresh)] flex items-center justify-center text-2xl">
                                     🌾
                                 </div>
                                 <span className="text-2xl font-extrabold">BICAP</span>

@@ -8,10 +8,10 @@ export default function RetailerHeader() {
     const pathname = usePathname();
 
     return (
-        <nav className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-3 sticky top-0 z-50 shadow-xl border-b border-blue-700/30">
+        <nav className="pixel-nav bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-3 sticky top-0 z-50">
             <div className="w-full flex justify-between items-center gap-2 max-w-7xl mx-auto">
                 <Link href="/retailer" className="text-xl font-extrabold whitespace-nowrap hidden lg:flex items-center gap-2 hover:opacity-90 transition-opacity">
-                    <span className="text-2xl">🛒</span>
+                    <span className="pixel-icon w-9 h-9 text-lg flex items-center justify-center bg-white/20">🛒</span>
                     <span>BICAP Retailer</span>
                 </Link>
                 <div className="flex items-center gap-1 justify-end w-full lg:w-auto overflow-x-auto scrollbar-hide">

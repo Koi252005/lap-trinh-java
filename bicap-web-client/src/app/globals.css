@@ -1,47 +1,52 @@
 @import "tailwindcss";
 
 /* ============================================
-   BICAP - Color Palette (Chủ đề Rau Củ)
+   BICAP - Pixel Plant Theme (Thực vật + Pixel)
    ============================================ */
 :root {
-    /* Primary Colors - Rau Xanh */
-    --green-fresh: #7CB342;      /* Xanh lá non - rau xanh tươi */
-    --green-dark: #388E3C;       /* Xanh đậm - lá già */
-    --green-light: #AED581;      /* Xanh nhạt - background */
-    --green-emerald: #00C853;    /* Xanh ngọc - accent */
+    /* Pixel Plant - Primary (lá, thân) */
+    --green-fresh: #5a9c3a;
+    --green-dark: #2d5c1e;
+    --green-light: #8bc34a;
+    --green-emerald: #3d8b2e;
     
-    /* Secondary Colors - Trái Cây */
-    --orange-ripe: #FFB300;      /* Vàng cam - trái cây chín */
-    --orange-bright: #F57C00;    /* Đỏ cam - cà chua, ớt */
-    --orange-light: #FFE082;     /* Cam nhạt - background */
+    /* Pixel - Trái cây / accent */
+    --orange-ripe: #e6a336;
+    --orange-bright: #c87820;
+    --orange-light: #f5d88a;
     
-    /* Earth Colors - Đất */
-    --brown-earth: #8D6E63;      /* Nâu đất */
-    --beige-cream: #FFF9E6;      /* Kem - giấy, background nhẹ */
+    /* Earth - Đất pixel */
+    --brown-earth: #6d4c3d;
+    --beige-cream: #f4eed8;
     
-    /* Neutral Colors */
-    --white: #FFFFFF;
-    --gray-50: #FAFAFA;
-    --gray-100: #F5F5F5;
-    --gray-200: #EEEEEE;
-    --gray-300: #E0E0E0;
-    --gray-400: #BDBDBD;
-    --gray-500: #9E9E9E;
-    --gray-600: #757575;
-    --gray-700: #616161;
-    --gray-800: #424242;
-    --gray-900: #212121;
+    /* Neutral */
+    --white: #fafaf8;
+    --gray-50: #e8e6e0;
+    --gray-100: #d4d2ca;
+    --gray-200: #b8b4a8;
+    --gray-300: #9a9688;
+    --gray-400: #7c7868;
+    --gray-500: #5e5a4a;
+    --gray-600: #484632;
+    --gray-700: #363420;
+    --gray-800: #242210;
+    --gray-900: #1a1808;
     
-    /* Semantic Colors */
-    --success: #4CAF50;
-    --warning: #FF9800;
-    --error: #F44336;
-    --info: #2196F3;
+    /* Semantic */
+    --success: #4a9c3a;
+    --warning: #e6a336;
+    --error: #c83828;
+    --info: #3878c8;
     
     /* Background & Foreground */
-    --background: #ffffff;
-    --foreground: #171717;
-    --background-alt: #F9FAFB;
+    --background: #f4eed8;
+    --foreground: #242210;
+    --background-alt: #e8e4d8;
+    
+    /* Pixel borders */
+    --pixel-border: 3px solid var(--gray-800);
+    --pixel-radius: 0;
+    --pixel-shadow: 4px 4px 0 var(--gray-800);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -60,6 +65,77 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* ============================================
+   Pixel theme – khung, nút, thẻ, icon (không đổi font chữ)
+   ============================================ */
+.theme-pixel {
+    --tw-shadow-colored: var(--gray-800);
+}
+
+/* Khung / hộp pixel */
+.pixel-box {
+    border: var(--pixel-border);
+    border-radius: var(--pixel-radius);
+    box-shadow: var(--pixel-shadow);
+}
+.pixel-card {
+    border: 3px solid var(--gray-800);
+    border-radius: 0;
+    box-shadow: 5px 5px 0 var(--gray-800);
+}
+.theme-pixel .pixel-card:hover {
+    box-shadow: 6px 6px 0 var(--gray-800);
+}
+
+/* Nút pixel */
+.pixel-btn {
+    border: 3px solid var(--gray-800);
+    border-radius: 0;
+    box-shadow: 4px 4px 0 var(--gray-800);
+}
+.pixel-btn:hover {
+    box-shadow: 5px 5px 0 var(--gray-800);
+}
+.pixel-btn:active {
+    box-shadow: 1px 1px 0 var(--gray-800);
+    transform: translate(3px, 3px);
+}
+
+/* Ô input pixel */
+.pixel-input {
+    border: 3px solid var(--gray-800);
+    border-radius: 0;
+    box-shadow: inset 2px 2px 0 var(--gray-200);
+}
+.pixel-input:focus {
+    outline: none;
+    box-shadow: inset 2px 2px 0 var(--gray-200), 0 0 0 3px var(--green-light);
+}
+
+/* Khung icon / biểu tượng sản phẩm – vuông, viền đậm */
+.pixel-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--gray-800);
+    border-radius: 0;
+    box-shadow: 3px 3px 0 var(--gray-800);
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+/* Badge / nhãn pixel */
+.pixel-badge {
+    border: 2px solid var(--gray-800);
+    border-radius: 0;
+    box-shadow: 2px 2px 0 var(--gray-800);
+}
+/* Header / nav pixel */
+.pixel-nav {
+    border-bottom: 4px solid var(--gray-800);
+    box-shadow: 0 4px 0 var(--gray-800);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -67,18 +143,6 @@ body {
 
     to {
         opacity: 1;
-    }
-}
-
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
     }
 }
 
