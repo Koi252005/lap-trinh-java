@@ -6,6 +6,9 @@ const { Op } = require('sequelize');
 // Key: firebaseUid, Value: Array of farms
 const memoryFarmsStore = new Map();
 
+// Export memoryFarmsStore để các controller khác có thể sử dụng
+exports.memoryFarmsStore = memoryFarmsStore;
+
 // 1. Tạo trang trại mới
 exports.createFarm = async (req, res) => {
   try {

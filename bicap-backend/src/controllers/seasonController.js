@@ -88,7 +88,7 @@ exports.createSeason = async (req, res) => {
         } catch (dbError) {
             if (dbError.name === 'SequelizeConnectionError' || dbError.name === 'SequelizeHostNotFoundError') {
                 // Try memory store
-                const { memoryFarmsStore } = new Map() } = require('./farmController');
+                const { memoryFarmsStore } = require('./farmController');
                 if (memoryFarmsStore && memoryFarmsStore.has(firebaseUid)) {
                     const farms = memoryFarmsStore.get(firebaseUid);
                     farm = farms.find(f => f.id == farmId || f.id === parseInt(farmId));
