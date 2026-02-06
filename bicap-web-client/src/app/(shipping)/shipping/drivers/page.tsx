@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { API_BASE } from "@/lib/api";
 
-// Định nghĩa kiểu dữ liệu Tài xế (Cập nhật để khớp với Backend mới)
 interface Driver {
   id: string | number;
   name: string;
@@ -10,48 +10,46 @@ interface Driver {
   plate: string;
   status: string;
   phone?: string;
-  current_job?: string | number; // ID đơn hàng đang chạy (nếu có)
+  current_job?: string | number | null;
 }
 
 export default function DriversPage() {
-  // --- STATE ---
-  // Chỉ còn lại state danh sách và loading
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // --- HÀM LẤY DỮ LIỆU TỪ API (GET) ---
   const fetchDrivers = async () => {
+    setError(null);
     try {
-      // Gọi API (Đường dẫn này khớp với controller getAllDrivers bạn vừa thêm)
-      const response = await fetch("http://localhost:5001/api/drivers");
-      
-      if (!response.ok) {
-        // Fallback: Nếu API chưa chạy hoặc lỗi, dùng dữ liệu giả để không trắng trang
-        console.warn("API lỗi hoặc chưa bật, dùng dữ liệu mẫu.");
-        setDrivers([
-             { id: 1, name: "Nguyễn Văn A (Demo)", vehicle: "Xe tải 1.5 Tấn", plate: "29C-123.45", status: "Bận", phone: "0987654321", current_job: "DH-001" },
-             { id: 2, name: "Trần Văn B (Demo)", vehicle: "Xe bán tải", plate: "51D-999.88", status: "Rảnh", phone: "0912345678" },
-        ]);
-        return;
+      const base = typeof API_BASE === "string" ? API_BASE : "http://localhost:5001/api";
+      const response = await fetch(`${base}/drivers`, { method: "GET" });
+      let rawData: unknown;
+      try {
+        rawData = await response.json();
+      } catch {
+        rawData = [];
       }
+      const list = Array.isArray(rawData) ? rawData : (rawData && typeof rawData === "object" && "drivers" in (rawData as object) ? (rawData as { drivers: unknown[] }).drivers : []);
+      const safeList = Array.isArray(list) ? list : [];
 
-      const rawData = await response.json();
-      console.log("Drivers Data:", rawData);
-
-      // Map dữ liệu cẩn thận để tránh lỗi tên trường
-      const formattedData = rawData.map((item: any) => ({
-        id: item.id || item._id,
+      const formattedData: Driver[] = safeList.map((item: any) => ({
+        id: item.id ?? item._id,
         name: item.name || item.fullName || "Tài xế",
         vehicle: item.vehicle || item.vehicleType || "Xe tải",
         plate: item.plate || item.licensePlate || "---",
-        status: item.status || "Rảnh", 
+        status: item.status === "Bận" || item.status === "Rảnh" ? item.status : "Rảnh",
         phone: item.phone || item.sdt || "",
-        current_job: item.current_job || null
+        current_job: item.current_job ?? null,
       }));
 
       setDrivers(formattedData);
-    } catch (error) {
-      console.error("Lỗi tải danh sách tài xế:", error);
+      if (!response.ok) {
+        setError("Không tải được danh sách tài xế. Mã phản hồi: " + response.status);
+      }
+    } catch (err) {
+      console.error("Lỗi tải danh sách tài xế:", err);
+      setError("Không kết nối được tới server. Kiểm tra backend đã chạy tại đúng cổng chưa.");
+      setDrivers([]);
     } finally {
       setLoading(false);
     }
@@ -74,8 +72,6 @@ export default function DriversPage() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      
-      {/* HEADER: Đã xóa nút Thêm tài xế */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -84,6 +80,10 @@ export default function DriversPage() {
           <p className="text-sm text-gray-500 mt-1">Giám sát trạng thái hoạt động của đội xe</p>
         </div>
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
+      )}
 
       {/* GRID DANH SÁCH TÀI XẾ */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -150,8 +150,11 @@ export default function DriversPage() {
           ))
         ) : (
           <div className="col-span-3 flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-            <div className="text-4xl mb-2 opacity-50">📭</div>
+            <div className="text-4xl mb-2 opacity-50">🚚</div>
             <p className="text-gray-500">Chưa có tài xế nào trong hệ thống.</p>
+            <p className="text-sm text-gray-400 mt-2 text-center max-w-md">
+              Backend tự tạo 8 tài xế mẫu khi khởi động. Nếu vẫn trống, hãy khởi động lại backend.
+            </p>
           </div>
         )}
       </div>
