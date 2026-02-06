@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
+import { API_BASE } from '@/lib/api';
 import Link from 'next/link';
 
 interface Product {
@@ -61,7 +62,7 @@ export default function FarmProductManager() {
     const fetchFarms = async () => {
         try {
             const token = await auth?.currentUser?.getIdToken();
-            const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
+            const res = await axios.get(`${API_BASE}/farms/my-farms`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.farms?.length > 0) {
@@ -80,7 +81,7 @@ export default function FarmProductManager() {
         setLoading(true);
         try {
             const token = await auth?.currentUser?.getIdToken();
-            const res = await axios.get(`http://localhost:5001/api/products/farm/${farmId}`, {
+            const res = await axios.get(`${API_BASE}/products/farm/${farmId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProducts(res.data.products);
@@ -94,7 +95,7 @@ export default function FarmProductManager() {
     const fetchSelectableSeasons = async (farmId: number) => {
         try {
             const token = await auth?.currentUser?.getIdToken();
-            const res = await axios.get(`http://localhost:5001/api/seasons/farm/${farmId}`, {
+            const res = await axios.get(`${API_BASE}/seasons/farm/${farmId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Hiển thị cả vụ đang diễn ra (active) và đã kết thúc (completed) để chọn đăng bán
@@ -107,31 +108,36 @@ export default function FarmProductManager() {
 
     const handlePostProduct = async (e: React.FormEvent) => {
         e.preventDefault();
+        const farmId = selectedFarmId != null ? Number(selectedFarmId) : null;
+        if (!farmId || !productName?.trim()) {
+            alert('Vui lòng nhập tên sản phẩm và chọn trang trại.');
+            return;
+        }
         setPosting(true);
         try {
             const token = await auth?.currentUser?.getIdToken();
-            await axios.post('http://localhost:5001/api/products', {
-                name: productName,
+            await axios.post(`${API_BASE}/products`, {
+                name: productName.trim(),
                 seasonId: selectedSeasonId ? Number(selectedSeasonId) : null,
-                farmId: selectedFarmId,
-                price: Number(price),
-                quantity: Number(quantity),
-                batchCode: `BATCH-${Date.now()}` // Auto-generate
+                farmId,
+                price: Math.max(0, Number(price) || 0),
+                quantity: Math.max(0, Number(quantity) || 0),
+                batchCode: `BATCH-${Date.now()}`,
             }, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             });
 
-            // Reset and Reload
             setShowModal(false);
             setProductName('');
             setPrice('');
             setQuantity('');
             setSelectedSeasonId('');
-            fetchProducts(selectedFarmId!);
+            fetchProducts(farmId);
             alert('Đăng bán thành công!');
         } catch (error: any) {
             console.error(error);
-            alert(error.response?.data?.message || 'Lỗi đăng bán');
+            const msg = error.response?.data?.message || error.response?.data?.error || 'Lỗi đăng bán';
+            alert(msg);
         } finally {
             setPosting(false);
         }
