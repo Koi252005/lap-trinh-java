@@ -3,10 +3,10 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
-const { uploadSingle } = require('../middleware/uploadMiddleware');
+const { optionalUploadSingle } = require('../middleware/uploadMiddleware');
 
-// Tạo sản phẩm (Chỉ chủ trại) - với upload ảnh
-router.post('/', verifyToken, requireRole(['farm', 'admin']), uploadSingle('image'), productController.createProduct);
+// Tạo sản phẩm (Chỉ chủ trại) - nhận JSON hoặc multipart (ảnh tùy chọn)
+router.post('/', verifyToken, requireRole(['farm', 'admin']), optionalUploadSingle('image'), productController.createProduct);
 
 // Xem tất cả sản phẩm (Marketplace - Public)
 router.get('/', productController.getAllProducts);

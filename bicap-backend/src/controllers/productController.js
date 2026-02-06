@@ -8,7 +8,22 @@ const { getFileUrl } = require('../middleware/uploadMiddleware');
 // 1. Tạo lô sản phẩm mới (Đăng bán từ vụ mùa)
 exports.createProduct = async (req, res) => {
   try {
-    const { name, batchCode, quantity, price, farmId, seasonId } = req.body;
+    const body = req.body || {};
+    const name = body.name != null ? String(body.name).trim() : '';
+    const batchCode = body.batchCode != null ? String(body.batchCode).trim() : null;
+    const farmId = body.farmId != null ? Number(body.farmId) : null;
+    const seasonIdRaw = body.seasonId;
+    const seasonId = (seasonIdRaw !== undefined && seasonIdRaw !== null && seasonIdRaw !== '') ? Number(seasonIdRaw) : null;
+    const quantity = body.quantity != null ? Number(body.quantity) : 0;
+    const price = body.price != null ? Number(body.price) : 0;
+
+    if (!name) {
+      return res.status(400).json({ message: 'Vui lòng nhập tên sản phẩm' });
+    }
+    if (!farmId || farmId <= 0) {
+      return res.status(400).json({ message: 'Vui lòng chọn trang trại' });
+    }
+    const finalBatchCode = batchCode || `BATCH-${Date.now()}`;
 
     // Check if user ID exists
     if (!req.user?.id) {
@@ -40,24 +55,23 @@ exports.createProduct = async (req, res) => {
     }
 
     // Validate Season if provided (Traceability) - cho phép cả vụ đang diễn ra (active) và đã kết thúc (completed)
-    if (seasonId) {
+    if (seasonId != null && seasonId > 0) {
       const season = await FarmingSeason.findOne({ where: { id: seasonId, farmId } });
       if (!season) {
-        return res.status(400).json({ message: 'Vụ mùa không hợp lệ' });
+        return res.status(400).json({ message: 'Vụ mùa không hợp lệ hoặc không thuộc trang trại này' });
       }
       if (season.status === 'cancelled') {
         return res.status(400).json({ message: 'Vụ mùa đã bị hủy, không thể đăng bán sản phẩm' });
       }
-      // active hoặc completed đều được đăng bán
     }
 
     const newProductData = {
       name,
-      batchCode,
-      quantity,
-      price: price || 0,
+      batchCode: finalBatchCode,
+      quantity: Math.max(0, quantity),
+      price: Math.max(0, price),
       farmId,
-      seasonId, // Link to season
+      seasonId: seasonId > 0 ? seasonId : null,
       status: 'available' // Ready to sell
     };
 

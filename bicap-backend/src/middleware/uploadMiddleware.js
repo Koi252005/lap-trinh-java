@@ -72,6 +72,20 @@ const uploadSingle = (fieldName = 'image') => {
 };
 
 /**
+ * Chỉ dùng multer khi client gửi multipart/form-data; nếu gửi JSON thì bỏ qua để req.body giữ nguyên.
+ * Tránh lỗi 400 khi frontend gửi application/json (đăng bán không ảnh).
+ */
+const optionalUploadSingle = (fieldName = 'image') => {
+    return (req, res, next) => {
+        const contentType = (req.headers['content-type'] || '').toLowerCase();
+        if (contentType.includes('multipart/form-data')) {
+            return upload.single(fieldName)(req, res, next);
+        }
+        next();
+    };
+};
+
+/**
  * Middleware upload multiple files
  */
 const uploadMultiple = (fieldName = 'images', maxCount = 5) => {
@@ -119,6 +133,7 @@ const deleteFile = (filepath) => {
 
 module.exports = {
     uploadSingle,
+    optionalUploadSingle,
     uploadMultiple,
     uploadFields,
     getFileUrl,
