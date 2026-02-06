@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { API_BASE } from '@/lib/api';
-import PixelPlantIcon from '@/components/PixelPlantIcon';
+import { getProductIcon } from '@/lib/productIcons';
 
 interface Product {
     id: number;
@@ -242,9 +242,18 @@ export default function MarketplacePage() {
 
     const submitOrder = async () => {
         if (!selectedProduct) return;
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         setBuying(true);
         try {
             const token = await auth.currentUser?.getIdToken();
+            if (!token) {
+                alert('Vui lòng đăng nhập');
+                setBuying(false);
+                return;
+            }
             await axios.post(`${API_BASE}/orders`, {
                 productId: selectedProduct.id,
                 quantity: buyQuantity
@@ -352,8 +361,8 @@ export default function MarketplacePage() {
                     <div className="text-center py-20">
                         <div className="pixel-card inline-block p-8 bg-white">
                             <div className="spinner-enhanced w-16 h-16 mx-auto mb-6"></div>
-                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-[var(--beige-cream)] flex items-center justify-center p-1">
-                                <PixelPlantIcon type="default" size={40} />
+                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-[var(--beige-cream)] flex items-center justify-center p-1 text-4xl">
+                                🌾
                             </div>
                             <p className="text-gray-600 font-semibold">Đang tải sản phẩm từ nông trại...</p>
                         </div>
@@ -382,8 +391,8 @@ export default function MarketplacePage() {
                                     >
                                         {/* Khung icon sản phẩm – pixel */}
                                         <div className={`h-48 ${gradientClass} flex items-center justify-center relative overflow-hidden border-b-4 border-[var(--gray-800)]`}>
-                                            <div className="pixel-icon w-24 h-24 bg-white/30 flex items-center justify-center p-1">
-                                                <PixelPlantIcon name={product.name} size={72} />
+                                            <div className="pixel-icon w-24 h-24 bg-white/30 flex items-center justify-center p-1 text-7xl">
+                                                {getProductIcon(product.name)}
                                             </div>
                                             
                                             <div className="pixel-badge absolute top-2 right-2 text-[var(--green-dark)] text-xs font-bold px-2 py-1 bg-white flex items-center gap-1">
@@ -452,8 +461,8 @@ export default function MarketplacePage() {
                             })
                         ) : (
                             <div className="col-span-full text-center py-20">
-                                <div className="pixel-icon w-24 h-24 mx-auto mb-6 bg-[var(--beige-cream)] flex items-center justify-center p-1">
-                                <PixelPlantIcon type="leaf" size={72} />
+                                <div className="pixel-icon w-24 h-24 mx-auto mb-6 bg-[var(--beige-cream)] flex items-center justify-center p-1 text-7xl">
+                                🛒
                             </div>
                                 <h3 className="text-2xl font-bold text-gray-600 mb-2">Không tìm thấy sản phẩm nào!</h3>
                                 <p className="text-gray-500">Thử tìm kiếm với từ khóa khác hoặc chọn danh mục khác</p>
@@ -468,8 +477,8 @@ export default function MarketplacePage() {
                 <div className="pixel-card bg-[var(--beige-cream)] p-8 md:p-12">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div className="text-center">
-                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1">
-                                <PixelPlantIcon type="default" size={40} />
+                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1 text-4xl">
+                                🌾
                             </div>
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Nông Sản Sạch</h3>
                             <p className="text-gray-600 text-sm">
@@ -477,8 +486,8 @@ export default function MarketplacePage() {
                             </p>
                         </div>
                         <div className="text-center">
-                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1">
-                                <PixelPlantIcon type="leaf" size={40} />
+                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1 text-4xl">
+                                🥬
                             </div>
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Truy Xuất Nguồn Gốc</h3>
                             <p className="text-gray-600 text-sm">
@@ -486,8 +495,8 @@ export default function MarketplacePage() {
                             </p>
                         </div>
                         <div className="text-center">
-                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1">
-                                <PixelPlantIcon type="default" size={40} />
+                            <div className="pixel-icon w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center p-1 text-4xl">
+                                🌾
                             </div>
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Giao Hàng Tận Nơi</h3>
                             <p className="text-gray-600 text-sm">
@@ -513,8 +522,8 @@ export default function MarketplacePage() {
 
                         <div className="relative z-10">
                             <div className="text-center mb-6">
-                                <div className="pixel-icon w-20 h-20 mx-auto mb-4 bg-[var(--green-light)] flex items-center justify-center p-1">
-                                    <PixelPlantIcon name={selectedProduct.name} size={56} />
+                                <div className="pixel-icon w-20 h-20 mx-auto mb-4 bg-[var(--green-light)] flex items-center justify-center p-1 text-6xl">
+                                    {selectedProduct ? getProductIcon(selectedProduct.name) : '🛒'}
                                 </div>
                                 <h2 className="text-2xl font-extrabold text-gray-800 mb-2">Đặt Mua Nông Sản</h2>
                                 <h3 className="font-bold text-lg text-[#388E3C] mb-1 break-words px-4">{selectedProduct.name}</h3>
