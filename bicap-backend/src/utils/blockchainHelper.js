@@ -12,20 +12,34 @@ const blockchainHelper = {
      * @returns {Promise<string>} - Returns a fake Transaction Hash
      */
     writeToBlockchain: async (data) => {
-        return new Promise((resolve) => {
-            // Simulate network delay
-            setTimeout(() => {
-                // Create a fake hash based on data + random
-                const dataString = JSON.stringify(data);
-                const randomNonce = crypto.randomBytes(4).toString('hex');
-                const hash = crypto.createHash('sha256').update(dataString + randomNonce).digest('hex');
-                const mockTxHash = `0x${hash}`;
+        return new Promise((resolve, reject) => {
+            try {
+                // Validate input
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid data: data must be an object');
+                }
 
-                console.log(`[MOCK BLOCKCHAIN] Simulated transaction for data:`, data);
-                console.log(`[MOCK BLOCKCHAIN] Returned TxHash: ${mockTxHash}`);
+                // Simulate network delay
+                setTimeout(() => {
+                    try {
+                        // Create a fake hash based on data + random
+                        const dataString = JSON.stringify(data);
+                        const randomNonce = crypto.randomBytes(4).toString('hex');
+                        const hash = crypto.createHash('sha256').update(dataString + randomNonce).digest('hex');
+                        const mockTxHash = `0x${hash}`;
 
-                resolve(mockTxHash);
-            }, 500); // 500ms delay
+                        console.log(`[MOCK BLOCKCHAIN] Simulated transaction for data:`, data);
+                        console.log(`[MOCK BLOCKCHAIN] Returned TxHash: ${mockTxHash}`);
+
+                        resolve(mockTxHash);
+                    } catch (hashError) {
+                        console.error('[MOCK BLOCKCHAIN] Hash generation error:', hashError);
+                        reject(new Error('Failed to generate blockchain hash: ' + hashError.message));
+                    }
+                }, 500); // 500ms delay
+            } catch (error) {
+                reject(error);
+            }
         });
     },
 

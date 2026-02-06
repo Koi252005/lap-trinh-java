@@ -2,3 +2,14 @@
 [2026-01-29T12:26:33.426Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
 [2026-01-29T12:27:08.015Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
 [2026-01-29T13:11:36.417Z] Auth Error: Decoding Firebase ID token failed. Make sure you passed the entire string JWT which represents an ID token. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.
+[2026-02-06T18:48:43.936Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:48:43.945Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:49:00.039Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:49:03.904Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:49:24.584Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:49:24.587Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:51:42.539Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:51:56.126Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:54:53.834Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:54:53.838Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.
+[2026-02-06T18:55:11.076Z] Auth Error: The default Firebase app does not exist. Make sure you call initializeApp() before using any of the Firebase services.

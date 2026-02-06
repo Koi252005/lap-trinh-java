@@ -2,6 +2,10 @@
 const { Farm, FarmingSeason, FarmingProcess } = require('../models');
 const { Op } = require('sequelize');
 
+// In-memory store for farms when database is not connected
+// Key: firebaseUid, Value: Array of farms
+const memoryFarmsStore = new Map();
+
 // 1. Tạo trang trại mới
 exports.createFarm = async (req, res) => {
   try {
@@ -14,21 +18,30 @@ exports.createFarm = async (req, res) => {
     // If database not connected, ownerId might be null
     // In that case, we can't create farm in database, return error or mock response
     if (!ownerId) {
-      // Database not connected - return mock farm response
-      console.warn('Database not connected, returning mock farm response');
+      // Database not connected - save to memory and return mock farm response
+      const firebaseUid = req.user?.firebaseUid || 'temp_owner';
+      const mockFarm = {
+        id: Date.now(), // Temporary ID
+        name,
+        address,
+        description,
+        certification,
+        location_coords,
+        ownerId: firebaseUid,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Save to memory store
+      if (!memoryFarmsStore.has(firebaseUid)) {
+        memoryFarmsStore.set(firebaseUid, []);
+      }
+      memoryFarmsStore.get(firebaseUid).push(mockFarm);
+      
+      console.warn('Database not connected, saving farm to memory store');
       return res.status(200).json({
         message: 'Tạo trang trại thành công (Database chưa kết nối - chỉ lưu tạm)',
-        farm: {
-          id: Date.now(), // Temporary ID
-          name,
-          address,
-          description,
-          certification,
-          location_coords,
-          ownerId: req.user?.firebaseUid || 'temp_owner',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
+        farm: mockFarm,
         warning: 'Database chưa kết nối. Trang trại chưa được lưu vào database. Vui lòng kết nối database để lưu vĩnh viễn.'
       });
     }
@@ -50,21 +63,30 @@ exports.createFarm = async (req, res) => {
   } catch (error) {
     console.error('Create Farm Error:', error);
     
-    // If database error, return mock response
+    // If database error, save to memory and return mock response
     if (error.name === 'SequelizeConnectionError' || error.name === 'SequelizeHostNotFoundError' || error.name === 'SequelizeValidationError') {
+      const firebaseUid = req.user?.firebaseUid || 'temp_owner';
+      const mockFarm = {
+        id: Date.now(),
+        name: req.body.name,
+        address: req.body.address,
+        description: req.body.description,
+        certification: req.body.certification,
+        location_coords: req.body.location_coords,
+        ownerId: firebaseUid,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Save to memory store
+      if (!memoryFarmsStore.has(firebaseUid)) {
+        memoryFarmsStore.set(firebaseUid, []);
+      }
+      memoryFarmsStore.get(firebaseUid).push(mockFarm);
+      
       return res.status(200).json({
         message: 'Tạo trang trại thành công (Database chưa kết nối - chỉ lưu tạm)',
-        farm: {
-          id: Date.now(),
-          name: req.body.name,
-          address: req.body.address,
-          description: req.body.description,
-          certification: req.body.certification,
-          location_coords: req.body.location_coords,
-          ownerId: req.user?.firebaseUid || 'temp_owner',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
+        farm: mockFarm,
         warning: 'Database chưa kết nối. Trang trại chưa được lưu vào database.'
       });
     }
@@ -76,13 +98,53 @@ exports.createFarm = async (req, res) => {
 // 2. Lấy danh sách trang trại của tôi
 exports.getMyFarms = async (req, res) => {
   try {
+    // Check if database is connected and user ID exists
+    if (!req.user?.id) {
+      // Database not connected or user not synced - try to get from memory store
+      const firebaseUid = req.user?.firebaseUid;
+      if (firebaseUid && memoryFarmsStore.has(firebaseUid)) {
+        const memoryFarms = memoryFarmsStore.get(firebaseUid);
+        console.warn('Database not connected, returning farms from memory store');
+        return res.status(200).json({ 
+          farms: memoryFarms,
+          warning: 'Database chưa kết nối. Đang hiển thị trang trại từ bộ nhớ tạm.'
+        });
+      }
+      
+      // No memory farms either - return empty array
+      console.warn('Database not connected and no memory farms, returning empty farms list');
+      return res.status(200).json({ 
+        farms: [],
+        warning: 'Database chưa kết nối. Vui lòng kết nối database để xem danh sách trang trại.'
+      });
+    }
+
     const farms = await Farm.findAll({
       where: { ownerId: req.user.id } // Chỉ lấy trang trại của người đang đăng nhập
     });
 
     res.status(200).json({ farms });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server' });
+    console.error('Get My Farms Error:', error);
+    
+    // If database connection error, try to get from memory store
+    if (error.name === 'SequelizeConnectionError' || error.name === 'SequelizeHostNotFoundError') {
+      const firebaseUid = req.user?.firebaseUid;
+      if (firebaseUid && memoryFarmsStore.has(firebaseUid)) {
+        const memoryFarms = memoryFarmsStore.get(firebaseUid);
+        return res.status(200).json({ 
+          farms: memoryFarms,
+          warning: 'Database chưa kết nối. Đang hiển thị trang trại từ bộ nhớ tạm.'
+        });
+      }
+      
+      return res.status(200).json({ 
+        farms: [],
+        warning: 'Database chưa kết nối. Vui lòng kết nối database để xem danh sách trang trại.'
+      });
+    }
+    
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 };
 

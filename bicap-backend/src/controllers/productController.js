@@ -10,8 +10,26 @@ exports.createProduct = async (req, res) => {
   try {
     const { name, batchCode, quantity, price, farmId, seasonId } = req.body;
 
+    // Check if user ID exists
+    if (!req.user?.id) {
+      return res.status(500).json({ 
+        message: 'Database chưa kết nối hoặc người dùng chưa được đồng bộ. Vui lòng kết nối database và đăng nhập lại.' 
+      });
+    }
+
     // Kiểm tra xem Farm có tồn tại không
-    const farm = await Farm.findByPk(farmId);
+    let farm;
+    try {
+      farm = await Farm.findByPk(farmId);
+    } catch (dbError) {
+      if (dbError.name === 'SequelizeConnectionError' || dbError.name === 'SequelizeHostNotFoundError') {
+        return res.status(500).json({ 
+          message: 'Database chưa kết nối. Vui lòng kết nối database để tạo sản phẩm.' 
+        });
+      }
+      throw dbError;
+    }
+
     if (!farm) {
       return res.status(404).json({ message: 'Trang trại không tồn tại' });
     }
@@ -42,26 +60,40 @@ exports.createProduct = async (req, res) => {
       status: 'available' // Ready to sell
     };
 
-    // Ghi dữ liệu lên Blockchain (Mock)
-    const txHash = await blockchainHelper.writeToBlockchain(newProductData);
+    // Ghi dữ liệu lên Blockchain (Mock) - Non-fatal if fails
+    let txHash;
+    try {
+      txHash = await blockchainHelper.writeToBlockchain(newProductData);
+    } catch (blockchainError) {
+      console.error('Blockchain error (non-fatal):', blockchainError);
+      txHash = null;
+    }
 
     const newProduct = await Product.create({
       ...newProductData,
-      txHash // Lưu hash vào DB
+      txHash: txHash || null // Lưu hash vào DB (null if blockchain failed)
     });
 
-    // Generate QR code URL for the product
+    // Generate QR code URL for the product (always works)
     const traceabilityURL = qrGenerator.generateProductTraceabilityURL(newProduct.id);
 
     res.status(201).json({
       message: 'Đăng bán sản phẩm thành công!',
       product: newProduct,
       qrCodeData: traceabilityURL,
-      qrCodeImageUrl: `${process.env.API_URL || 'http://localhost:5001'}/api/products/${newProduct.id}/qr-code`
+      qrCodeImageUrl: `${process.env.API_URL || 'http://localhost:5001'}/api/products/${newProduct.id}/qr-code`,
+      txHash: txHash || 'Blockchain chưa sẵn sàng'
     });
 
   } catch (error) {
-    console.error(error);
+    console.error('Create Product Error:', error);
+    
+    if (error.name === 'SequelizeConnectionError' || error.name === 'SequelizeHostNotFoundError') {
+      return res.status(500).json({ 
+        message: 'Database chưa kết nối. Vui lòng kết nối database để tạo sản phẩm.' 
+      });
+    }
+    
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 };
@@ -149,40 +181,61 @@ exports.getProductQRCode = async (req, res) => {
     const { productId } = req.params;
     const { format = 'png', size = 300 } = req.query;
 
-    // 1. Check Product existence
-    const product = await Product.findByPk(productId, {
-      include: [
-        { model: Farm, as: 'farm', attributes: ['name'] },
-        { model: FarmingSeason, as: 'season', attributes: ['id', 'name'] }
-      ]
-    });
-
-    if (!product) {
-      return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+    // Validate productId
+    if (!productId || isNaN(productId)) {
+      return res.status(400).json({ message: 'Product ID không hợp lệ' });
     }
 
-    // 2. Generate traceability URL
+    // Validate size
+    const qrSize = parseInt(size);
+    if (isNaN(qrSize) || qrSize < 50 || qrSize > 2000) {
+      return res.status(400).json({ message: 'Kích thước QR code phải từ 50 đến 2000 pixels' });
+    }
+
+    // 1. Check Product existence (optional - QR can work even if product doesn't exist in DB)
+    let product = null;
+    try {
+      product = await Product.findByPk(productId, {
+        include: [
+          { model: Farm, as: 'farm', attributes: ['name'] },
+          { model: FarmingSeason, as: 'season', attributes: ['id', 'name'] }
+        ]
+      });
+    } catch (dbError) {
+      // If database error, still generate QR code (traceability page will handle 404)
+      console.warn('Database error when fetching product for QR, generating QR anyway:', dbError.message);
+    }
+
+    // 2. Generate traceability URL (always works)
     const traceabilityURL = qrGenerator.generateProductTraceabilityURL(productId);
 
     // 3. Generate QR code based on format
-    if (format === 'svg') {
-      const svg = await qrGenerator.generateSVG(traceabilityURL, {
-        width: parseInt(size)
+    try {
+      if (format === 'svg') {
+        const svg = await qrGenerator.generateSVG(traceabilityURL, {
+          width: qrSize
+        });
+        res.setHeader('Content-Type', 'image/svg+xml');
+        return res.send(svg);
+      } else {
+        // Default: PNG
+        const buffer = await qrGenerator.generateBuffer(traceabilityURL, {
+          width: qrSize
+        });
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Disposition', `inline; filename="qr-product-${productId}.png"`);
+        return res.send(buffer);
+      }
+    } catch (qrError) {
+      console.error('QR Generation Error:', qrError);
+      return res.status(500).json({ 
+        message: 'Lỗi tạo mã QR', 
+        error: qrError.message 
       });
-      res.setHeader('Content-Type', 'image/svg+xml');
-      return res.send(svg);
-    } else {
-      // Default: PNG
-      const buffer = await qrGenerator.generateBuffer(traceabilityURL, {
-        width: parseInt(size)
-      });
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Content-Disposition', `inline; filename="qr-product-${productId}.png"`);
-      return res.send(buffer);
     }
 
   } catch (error) {
-    console.error('Error generating QR code:', error);
+    console.error('Error in getProductQRCode:', error);
     res.status(500).json({ 
       message: 'Lỗi tạo mã QR', 
       error: error.message 
@@ -199,28 +252,51 @@ exports.getProductQRCodeDataURL = async (req, res) => {
     const { productId } = req.params;
     const { size = 300 } = req.query;
 
-    // 1. Check Product existence
-    const product = await Product.findByPk(productId);
-    if (!product) {
-      return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+    // Validate productId
+    if (!productId || isNaN(productId)) {
+      return res.status(400).json({ message: 'Product ID không hợp lệ' });
     }
 
-    // 2. Generate traceability URL
+    // Validate size
+    const qrSize = parseInt(size);
+    if (isNaN(qrSize) || qrSize < 50 || qrSize > 2000) {
+      return res.status(400).json({ message: 'Kích thước QR code phải từ 50 đến 2000 pixels' });
+    }
+
+    // 1. Check Product existence (optional - QR can work even if product doesn't exist)
+    let product = null;
+    try {
+      product = await Product.findByPk(productId);
+    } catch (dbError) {
+      // If database error, still generate QR code
+      console.warn('Database error when fetching product for QR, generating QR anyway:', dbError.message);
+    }
+
+    // 2. Generate traceability URL (always works)
     const traceabilityURL = qrGenerator.generateProductTraceabilityURL(productId);
 
     // 3. Generate QR code as Data URL
-    const dataURL = await qrGenerator.generateDataURL(traceabilityURL, {
-      width: parseInt(size)
-    });
+    try {
+      const dataURL = await qrGenerator.generateDataURL(traceabilityURL, {
+        width: qrSize
+      });
 
-    res.json({
-      productId: productId,
-      traceabilityURL: traceabilityURL,
-      qrCodeDataURL: dataURL
-    });
+      res.json({
+        productId: productId,
+        traceabilityURL: traceabilityURL,
+        qrCodeDataURL: dataURL,
+        productExists: product !== null
+      });
+    } catch (qrError) {
+      console.error('QR Generation Error:', qrError);
+      return res.status(500).json({ 
+        message: 'Lỗi tạo mã QR', 
+        error: qrError.message 
+      });
+    }
 
   } catch (error) {
-    console.error('Error generating QR code Data URL:', error);
+    console.error('Error in getProductQRCodeDataURL:', error);
     res.status(500).json({ 
       message: 'Lỗi tạo mã QR', 
       error: error.message 
