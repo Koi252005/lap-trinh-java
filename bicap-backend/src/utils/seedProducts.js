@@ -63,4 +63,43 @@ async function runSeed() {
   return { created, totalAvailable: all.length, products: all };
 }
 
-module.exports = { runSeed, sampleProducts };
+/** Tạo vài tài xế mẫu (driver) */
+async function seedDrivers() {
+  const drivers = [
+    { fullName: 'Nguyễn Văn Tài', email: 'taixe1@bicap.local', phone: '0901111111' },
+    { fullName: 'Trần Văn Lái', email: 'taixe2@bicap.local', phone: '0902222222' },
+    { fullName: 'Lê Thị Giao', email: 'taixe3@bicap.local', phone: '0903333333' },
+    { fullName: 'Phạm Văn Chuyển', email: 'taixe4@bicap.local', phone: '0904444444' },
+    { fullName: 'Hoàng Thị Vận', email: 'taixe5@bicap.local', phone: '0905555555' },
+    { fullName: 'Võ Văn Đường', email: 'taixe6@bicap.local', phone: '0906666666' },
+    { fullName: 'Ngô Thị Hàng', email: 'taixe7@bicap.local', phone: '0907777777' },
+    { fullName: 'Đỗ Văn Chở', email: 'taixe8@bicap.local', phone: '0908888888' },
+  ];
+  const createdNames = [];
+  for (let i = 0; i < drivers.length; i++) {
+    const d = drivers[i];
+    try {
+      const [user, created] = await User.findOrCreate({
+        where: { email: d.email },
+        defaults: {
+          fullName: d.fullName,
+          email: d.email,
+          phone: d.phone || null,
+          role: 'driver',
+          status: 'active',
+          firebaseUid: `seed_driver_${i + 1}`,
+        }
+      });
+      if (created) createdNames.push(user.fullName);
+      else if (user.role !== 'driver') {
+        await user.update({ role: 'driver', status: 'active' });
+      }
+    } catch (err) {
+      console.error('Seed driver failed:', d.email, err.message);
+      throw err;
+    }
+  }
+  return createdNames;
+}
+
+module.exports = { runSeed, sampleProducts, seedDrivers };

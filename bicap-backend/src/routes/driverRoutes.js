@@ -7,6 +7,14 @@ const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 // Middleware cho tất cả routes: yêu cầu authentication và role driver/shipping/admin
 const driverAuth = [verifyToken, requireRole(['driver', 'shipping', 'admin'])];
 
+// GET /api/drivers - Luôn trả 200 + mảng (bắt mọi lỗi để tránh 500)
+router.get('/', (req, res, next) => {
+  driverController.getAllDrivers(req, res).catch((err) => {
+    console.error('GET /api/drivers:', err);
+    if (!res.headersSent) res.status(200).json([]);
+  });
+});
+
 // Lấy thống kê của Driver
 router.get('/stats', driverAuth, driverController.getDriverStats);
 

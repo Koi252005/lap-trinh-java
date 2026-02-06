@@ -1,8 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-// THÊM DÒNG NÀY VÀO ĐẦU FILE 
-const driverController = require('./src/controllers/driverController');
 
 // SỬA DÒNG NÀY: Import từ models/index thay vì config/database
 const { connectDB } = require('./src/config/database');
@@ -55,12 +53,19 @@ const startServer = async () => {
       console.log('✅ Database models initialized');
       // Tự động seed sản phẩm nếu chưa có (Docker / lần chạy đầu)
       try {
-        const { Product } = require('./src/models');
-        const count = await Product.count({ where: { status: 'available' } }).catch(() => 0);
-        if (count === 0) {
+        const { Product, User } = require('./src/models');
+        const productCount = await Product.count({ where: { status: 'available' } }).catch(() => 0);
+        if (productCount === 0) {
           const { runSeed } = require('./src/utils/seedProducts');
           await runSeed();
-          console.log('🌱 Đã tự động tạo sản phẩm mẫu (seed) - có thể tạo đơn hàng ngay');
+          console.log('🌱 Đã tự động tạo sản phẩm mẫu (seed)');
+        }
+        const driverCount = await User.count({ where: { role: 'driver' } }).catch(() => 0);
+        if (driverCount < 8) {
+          const { seedDrivers } = require('./src/utils/seedProducts');
+          await seedDrivers();
+          const total = await User.count({ where: { role: 'driver' } });
+          console.log('🚚 Đã tạo đủ 8 tài xế mẫu (tổng:', total, ')');
         }
       } catch (seedErr) {
         console.warn('⚠️  Auto-seed skipped:', seedErr.message);
@@ -92,12 +97,38 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
+
+// GET /api/drivers - Luôn trả 200 + mảng (tránh 500 cho trang Tài xế & Đội xe)
+app.get('/api/drivers', (req, res) => {
+  const { User } = require('./src/models');
+  User.findAll({
+    where: { role: 'driver' },
+    attributes: ['id', 'fullName', 'phone', 'email', 'status'],
+    order: [['id', 'ASC']],
+  })
+    .then((drivers) => {
+      const list = (drivers || []).map((d) => ({
+        id: d.id,
+        fullName: d.fullName,
+        name: d.fullName,
+        phone: d.phone,
+        email: d.email,
+        vehicle: 'Xe tải',
+        plate: '---',
+        status: 'Rảnh',
+        current_job: null,
+      }));
+      res.status(200).json(list);
+    })
+    .catch((err) => {
+      console.error('GET /api/drivers:', err);
+      res.status(200).json([]);
+    });
+});
+
 app.use('/api/drivers', driverRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/seed', require('./src/routes/seedRoutes'));
 app.use('/api/notifications', require('./src/routes/notificationRoutes'));
 app.use('/api/tasks', require('./src/routes/seasonTaskRoutes'));
-
-// 👇 THÊM DÒNG NÀY ĐỂ MỞ API:
-app.get('/api/drivers', driverController.getAllDrivers);
