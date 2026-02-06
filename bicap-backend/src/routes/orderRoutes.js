@@ -19,6 +19,7 @@ router.put('/:id/status', verifyToken, requireRole(['farm', 'admin']), orderCont
 
 // Retailer Actions
 router.put('/:id/cancel', verifyToken, requireRole(['retailer']), orderController.cancelOrder);
+// Cho phép cả file upload và URL trong body
 router.put('/:id/confirm-delivery', verifyToken, requireRole(['retailer']), uploadSingle('deliveryImage'), orderController.confirmDelivery);
 router.put('/:id/pay-deposit', verifyToken, requireRole(['retailer']), orderController.payDeposit);
 router.put('/:id/pay-remaining', verifyToken, requireRole(['retailer']), orderController.payRemaining);

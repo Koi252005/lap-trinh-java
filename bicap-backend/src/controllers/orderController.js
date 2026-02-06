@@ -224,43 +224,78 @@ exports.confirmDelivery = async (req, res) => {
     try {
         const { id } = req.params;
         let deliveryImage = req.body.deliveryImage;
-        const userId = req.user.id;
+        const userId = req.user?.id;
         
-        // Lấy image từ uploaded file nếu có
+        // Kiểm tra user ID
+        if (!userId) {
+            return res.status(401).json({ message: 'Người dùng chưa được xác thực. Vui lòng đăng nhập lại.' });
+        }
+        
+        // Lấy image từ uploaded file nếu có (ưu tiên file upload)
         if (req.file) {
             deliveryImage = getFileUrl(req, req.file.path);
+        }
+
+        // Kiểm tra có ảnh minh chứng
+        if (!deliveryImage) {
+            return res.status(400).json({ message: 'Vui lòng tải lên ảnh bằng chứng nhận hàng' });
         }
 
         const order = await Order.findByPk(id, {
             include: [{ model: Product, as: 'product' }]
         });
 
-        if (!order) return res.status(404).json({ message: 'Đơn hàng không tồn tại' });
-        if (order.retailerId !== userId) return res.status(403).json({ message: 'Bạn không có quyền' });
-        if (order.status !== 'shipping') return res.status(400).json({ message: 'Đơn hàng chưa ở trạng thái vận chuyển' });
+        if (!order) {
+            return res.status(404).json({ message: 'Đơn hàng không tồn tại' });
+        }
+        
+        if (order.retailerId !== userId) {
+            return res.status(403).json({ message: 'Bạn không có quyền xác nhận đơn hàng này' });
+        }
+        
+        // Cho phép xác nhận khi status là 'shipping' hoặc 'delivering'
+        if (!['shipping', 'delivering'].includes(order.status)) {
+            return res.status(400).json({ 
+                message: `Đơn hàng đang ở trạng thái "${order.status}". Chỉ có thể xác nhận khi đơn hàng đang vận chuyển.` 
+            });
+        }
 
         // Update status and image
-        // Update status and image
         order.status = 'delivered';
-        if (deliveryImage) order.deliveryImage = deliveryImage;
+        order.deliveryImage = deliveryImage;
         await order.save();
 
         // Notify Farm
-        const { createNotificationInternal } = require('./notificationController');
-        const farm = await Farm.findByPk(order.product.farmId);
-        if (farm) {
-            await createNotificationInternal(
-                farm.ownerId,
-                'Đơn hàng hoàn tất',
-                `Đơn hàng #${order.id} đã được nhận thành công`,
-                'order'
-            );
+        try {
+            const { createNotificationInternal } = require('./notificationController');
+            const farm = await Farm.findByPk(order.product.farmId);
+            if (farm && farm.ownerId) {
+                await createNotificationInternal(
+                    farm.ownerId,
+                    'Đơn hàng hoàn tất',
+                    `Đơn hàng #${order.id} đã được nhận thành công`,
+                    'order'
+                );
+            }
+        } catch (notifError) {
+            console.warn('Failed to send notification:', notifError.message);
+            // Không block response nếu notification fail
         }
 
-        res.json({ message: 'Xác nhận nhận hàng thành công', order });
+        res.json({ 
+            message: 'Xác nhận nhận hàng thành công', 
+            order: {
+                id: order.id,
+                status: order.status,
+                deliveryImage: order.deliveryImage
+            }
+        });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Lỗi xác nhận đơn hàng' });
+        console.error('Confirm Delivery Error:', error);
+        res.status(500).json({ 
+            message: 'Lỗi xác nhận đơn hàng', 
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+        });
     }
 };
 

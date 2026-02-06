@@ -93,30 +93,50 @@ export default function RetailerOrderDetail() {
             let imageUrl = deliveryImage;
 
             if (deliveryImage.startsWith('blob:')) {
-                // Fetch the blob data
-                const response = await fetch(deliveryImage);
-                const blob = await response.blob();
+                try {
+                    // Fetch the blob data
+                    const response = await fetch(deliveryImage);
+                    const blob = await response.blob();
 
-                // Create storage ref
-                const timestamp = Date.now();
-                const storageRef = ref(storage, `delivery_proofs/order_${order?.id}_${timestamp}.jpg`);
+                    // Create storage ref
+                    const timestamp = Date.now();
+                    const storageRef = ref(storage, `delivery_proofs/order_${order?.id}_${timestamp}.jpg`);
 
-                // Upload
-                await uploadBytes(storageRef, blob);
-                imageUrl = await getDownloadURL(storageRef);
+                    // Upload
+                    await uploadBytes(storageRef, blob);
+                    imageUrl = await getDownloadURL(storageRef);
+                } catch (uploadError) {
+                    console.error('Firebase upload error:', uploadError);
+                    alert('Lỗi tải ảnh lên Firebase. Vui lòng thử lại.');
+                    setActionLoading(false);
+                    return;
+                }
             }
 
             const token = await auth.currentUser?.getIdToken();
-            await axios.put(`http://localhost:5001/api/orders/${order?.id}/confirm-delivery`, {
+            if (!token) {
+                alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                setActionLoading(false);
+                return;
+            }
+
+            const response = await axios.put(`http://localhost:5001/api/orders/${order?.id}/confirm-delivery`, {
                 deliveryImage: imageUrl
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert('Xác nhận thành công!');
-            window.location.reload();
-        } catch (error) {
-            console.error(error);
-            alert('Lỗi xác nhận hoặc tải ảnh minh chứng');
+
+            if (response.data && response.data.message) {
+                alert(response.data.message || 'Xác nhận thành công!');
+                window.location.reload();
+            } else {
+                alert('Xác nhận thành công!');
+                window.location.reload();
+            }
+        } catch (error: any) {
+            console.error('Confirm delivery error:', error);
+            const errorMessage = error.response?.data?.message || error.message || 'Lỗi xác nhận đơn hàng';
+            alert(`Lỗi: ${errorMessage}`);
         } finally {
             setActionLoading(false);
         }
