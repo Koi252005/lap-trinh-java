@@ -5,7 +5,11 @@ const { getFileUrl } = require('../middleware/uploadMiddleware');
 // 1. Tạo đơn hàng (Retailer mua từ Marketplace)
 exports.createOrder = async (req, res) => {
     try {
-        const { productId, quantity, contractTerms } = req.body;
+        const { productId: rawProductId, quantity, contractTerms } = req.body;
+        const productId = parseInt(rawProductId, 10);
+        if (!rawProductId || isNaN(productId) || productId < 1) {
+            return res.status(400).json({ message: 'Mã sản phẩm không hợp lệ' });
+        }
         // Logic fallback nếu req.user chưa có (do middleware verifyToken chỉ trả về userFirebase)
         let retailerId;
         if (req.user) {
@@ -21,20 +25,28 @@ exports.createOrder = async (req, res) => {
         // Kiểm tra sản phẩm
         const product = await Product.findByPk(productId);
         if (!product) {
-            return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+            return res.status(404).json({
+                message: 'Sản phẩm không tồn tại. Bấm "Tạo sản phẩm mẫu" trên trang Sàn rồi thử lại.',
+                needsSeed: true
+            });
+        }
+        if (product.status !== 'available') {
+            return res.status(400).json({ message: 'Sản phẩm không còn bán (trạng thái: ' + product.status + ')' });
         }
 
-        if (product.quantity < quantity) {
-            return res.status(400).json({ message: 'Số lượng sản phẩm không đủ' });
+        const qty = parseInt(quantity, 10) || 0;
+        if (qty < 1) return res.status(400).json({ message: 'Số lượng phải lớn hơn 0' });
+        if ((product.quantity || 0) < qty) {
+            return res.status(400).json({ message: 'Số lượng sản phẩm không đủ (còn ' + (product.quantity || 0) + ' kg)' });
         }
 
-        const totalPrice = product.price * quantity;
+        const totalPrice = product.price * qty;
 
         // Tạo đơn hàng
         const newOrder = await Order.create({
             retailerId,
             productId,
-            quantity,
+            quantity: qty,
             totalPrice,
             contractTerms, // Điều khoản hợp đồng (nếu có)
             status: 'pending'
@@ -42,7 +54,7 @@ exports.createOrder = async (req, res) => {
 
         // Tạm thời chưa trừ số lượng sản phẩm ngay, chờ xác nhận đơn hàng
         // Hoặc trừ luôn tùy logic. Ở đây mình trừ luôn cho đơn giản để tránh mua quá.
-        product.quantity -= quantity;
+        product.quantity -= qty;
         if (product.quantity === 0) product.status = 'distributed'; // Hết hàng
         await product.save();
 
@@ -76,17 +88,17 @@ exports.getOrdersByFarm = async (req, res) => {
     try {
         const { farmId } = req.params;
 
-        // Kiểm tra quyền sở hữu farm
-        const farm = await Farm.findByPk(farmId);
+        // Kiểm tra quyền sở hữu farm (admin được xem mọi farm)
+        const farm = await Farm.findByPk(parseInt(farmId, 10));
         if (!farm) return res.status(404).json({ message: 'Trại không tồn tại' });
-        if (farm.ownerId !== req.user.id) return res.status(403).json({ message: 'Không có quyền truy cập' });
+        if (req.user.role !== 'admin' && farm.ownerId !== req.user.id) return res.status(403).json({ message: 'Không có quyền truy cập' });
 
         const orders = await Order.findAll({
             include: [
                 {
                     model: Product,
                     as: 'product',
-                    where: { farmId }, // Chỉ lấy order thuộc farm này
+                    where: { farmId: parseInt(farmId, 10) }, // Chỉ lấy order thuộc farm này
                     attributes: ['name', 'price', 'batchCode']
                 },
                 {
@@ -117,10 +129,12 @@ exports.updateOrderStatus = async (req, res) => {
 
         if (!order) return res.status(404).json({ message: 'Đơn hàng không tồn tại' });
 
-        // Kiểm tra quyền: Chỉ chủ trại (của sản phẩm đó) mới được cập nhật
-        const farm = await Farm.findByPk(order.product.farmId);
-        if (farm.ownerId !== req.user.id) {
-            return res.status(403).json({ message: 'Bạn không có quyền xử lý đơn hàng này' });
+        // Kiểm tra quyền: Admin được cập nhật mọi đơn; không thì chỉ chủ trại (của sản phẩm đó)
+        if (req.user.role !== 'admin') {
+            const farm = await Farm.findByPk(order.product.farmId);
+            if (!farm || farm.ownerId !== req.user.id) {
+                return res.status(403).json({ message: 'Bạn không có quyền xử lý đơn hàng này' });
+            }
         }
 
         // Logic hoàn trả số lượng nếu hủy
@@ -164,7 +178,7 @@ exports.getMyOrders = async (req, res) => {
                     model: Product,
                     as: 'product',
                     attributes: ['name', 'price', 'batchCode', 'farmId'],
-                    include: [{ model: Farm, as: 'farm', attributes: ['name', 'ownerId'] }]
+                    include: [{ model: Farm, as: 'farm', attributes: ['name', 'address', 'ownerId'] }]
                 }
             ],
             order: [['createdAt', 'DESC']]

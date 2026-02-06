@@ -3,15 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import ScrollAnimation from '@/components/ScrollAnimation';
-import PixelPlantIcon from '@/components/PixelPlantIcon';
+import { getFeatureIcon } from '@/lib/productIcons';
 
 export default function Home() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [scrollY, setScrollY] = useState(0);
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [isLoaded] = useState(true);
 
     useEffect(() => {
-        setIsLoaded(true);
         
         const handleMouseMove = (e: MouseEvent) => {
             setMousePosition({ x: e.clientX, y: e.clientY });
@@ -62,42 +61,42 @@ export default function Home() {
 
     const features = [
         {
-            pixelType: 'leaf' as const,
+            icon: '🌱',
             title: 'Quản Lý Mùa Vụ',
             description: 'Ghi chép nhật ký canh tác, theo dõi quy trình từ gieo trồng đến thu hoạch một cách khoa học và có hệ thống',
             color: 'from-green-500 to-emerald-600',
             bgColor: 'bg-green-50'
         },
         {
-            pixelType: 'default' as const,
+            icon: '🔗',
             title: 'Blockchain Minh Bạch',
             description: 'Mọi thông tin được lưu trữ trên blockchain, không thể thay đổi, đảm bảo tính minh bạch tuyệt đối',
             color: 'from-blue-500 to-cyan-600',
             bgColor: 'bg-blue-50'
         },
         {
-            pixelType: 'default' as const,
+            icon: '📡',
             title: 'IoT Thông Minh',
             description: 'Cảm biến tự động theo dõi nhiệt độ, độ ẩm, pH. Cảnh báo ngay khi có bất thường',
             color: 'from-purple-500 to-pink-600',
             bgColor: 'bg-purple-50'
         },
         {
-            pixelType: 'fruit' as const,
+            icon: '🤝',
             title: 'Kết Nối Trực Tiếp',
             description: 'Nông dân bán trực tiếp cho nhà bán lẻ, không qua trung gian, giá cả công bằng',
             color: 'from-orange-500 to-red-600',
             bgColor: 'bg-orange-50'
         },
         {
-            pixelType: 'leaf' as const,
+            icon: '🔍',
             title: 'Truy Xuất Nguồn Gốc',
             description: 'Quét QR code là biết ngay sản phẩm từ đâu, ai trồng, quy trình như thế nào',
             color: 'from-teal-500 to-green-600',
             bgColor: 'bg-teal-50'
         },
         {
-            pixelType: 'fruit' as const,
+            icon: '💳',
             title: 'Thanh Toán Dễ Dàng',
             description: 'Thanh toán online an toàn, nhanh chóng. Hỗ trợ nhiều phương thức thanh toán',
             color: 'from-yellow-500 to-amber-600',
@@ -106,10 +105,10 @@ export default function Home() {
     ];
 
     const stats = [
-        { number: '1000+', label: 'Nông Dân', pixelType: 'default' as const, color: 'text-green-600' },
-        { number: '5000+', label: 'Sản Phẩm', pixelType: 'leaf' as const, color: 'text-emerald-600' },
-        { number: '99.9%', label: 'Minh Bạch', pixelType: 'leaf' as const, color: 'text-blue-600' },
-        { number: '24/7', label: 'Hỗ Trợ', pixelType: 'fruit' as const, color: 'text-purple-600' }
+        { number: '1000+', label: 'Nông Dân', icon: '👨‍🌾', color: 'text-green-600' },
+        { number: '5000+', label: 'Sản Phẩm', icon: '🥬', color: 'text-emerald-600' },
+        { number: '99.9%', label: 'Minh Bạch', icon: '🔗', color: 'text-blue-600' },
+        { number: '24/7', label: 'Hỗ Trợ', icon: '💬', color: 'text-purple-600' }
     ];
 
     return (
@@ -187,8 +186,8 @@ export default function Home() {
                             Chào mừng đến
                         </p>
                         <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
-                            <span className="pixel-icon w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 bg-[var(--beige-cream)] border-[var(--gray-800)] flex items-center justify-center p-1">
-                                <PixelPlantIcon type="default" size={64} />
+                            <span className="pixel-icon w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 bg-[var(--beige-cream)] border-[var(--gray-800)] flex items-center justify-center p-1 text-6xl">
+                                🌾
                             </span>
                             <span className="block text-[var(--green-dark)]">
                                 BICAP
@@ -244,8 +243,8 @@ export default function Home() {
                                     key={index}
                                     className="pixel-card glass-strong p-6 bg-white/90 hover-lift transition-all duration-300"
                                 >
-                                    <div className="pixel-icon w-14 h-14 mb-3 bg-white/80 flex items-center justify-center p-0.5" style={{ animationDelay: `${index * 0.2}s` }}>
-                                        <PixelPlantIcon type={stat.pixelType} size={36} />
+                                    <div className="pixel-icon w-14 h-14 mb-3 bg-white/80 flex items-center justify-center p-0.5 text-4xl" style={{ animationDelay: `${index * 0.2}s` }}>
+                                        {stat.icon}
                                     </div>
                                     <div className={`text-3xl font-extrabold ${stat.color} mb-2 text-glow`}>
                                         {stat.number}
@@ -335,8 +334,8 @@ export default function Home() {
                         {features.map((feature, index) => (
                             <ScrollAnimation key={index} direction="up" delay={index * 100}>
                                 <div className={`pixel-card ${feature.bgColor} p-8 hover-lift transition-all`}>
-                                    <div className={`pixel-icon w-20 h-20 bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 p-1`}>
-                                        <PixelPlantIcon type={feature.pixelType} size={48} />
+                                    <div className={`pixel-icon w-20 h-20 bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 p-1 text-5xl`}>
+                                        {feature.icon}
                                     </div>
                                     <h3 className="text-2xl font-bold text-gray-800 mb-4">
                                         {feature.title}
@@ -379,8 +378,8 @@ export default function Home() {
                             <ScrollAnimation key={index} direction="up" delay={index * 100}>
                                 <div className="text-center relative z-10">
                                     <div className="relative inline-block mb-6">
-                                        <div className="pixel-icon w-20 h-20 bg-[var(--green-fresh)] flex items-center justify-center p-1">
-                                            <PixelPlantIcon type={item.step === '1' ? 'leaf' : item.step === '2' ? 'default' : item.step === '3' ? 'default' : 'fruit'} size={48} />
+                                        <div className="pixel-icon w-20 h-20 bg-[var(--green-fresh)] flex items-center justify-center p-1 text-5xl">
+                                            {item.icon}
                                         </div>
                                         <div className="pixel-badge absolute -top-2 -right-2 w-8 h-8 bg-[var(--green-dark)] text-white flex items-center justify-center text-sm font-bold">
                                             {item.step}
@@ -488,8 +487,8 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                         <div>
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="pixel-icon w-12 h-12 bg-[var(--green-fresh)] flex items-center justify-center p-0.5">
-                                    <PixelPlantIcon type="default" size={28} />
+                                <div className="pixel-icon w-12 h-12 bg-[var(--green-fresh)] flex items-center justify-center p-0.5 text-3xl">
+                                    🌾
                                 </div>
                                 <span className="text-2xl font-extrabold">BICAP</span>
                             </div>

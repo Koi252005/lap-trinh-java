@@ -89,7 +89,7 @@ export default function PixelPlantIcon({ type, name, className = '', size = 48 }
             width={size}
             height={size}
             viewBox="0 0 16 16"
-            style={{ imageRendering: 'pixelated', imageRendering: 'crisp-edges' }}
+            style={{ imageRendering: 'pixelated' }}
         >
             {pixels.map(([x, y], i) => (
                 <rect key={i} x={x} y={y} width={1} height={1} fill={fill} />

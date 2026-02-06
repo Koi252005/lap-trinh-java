@@ -11,7 +11,9 @@ export default function GuestLayout({ children }: { children: React.ReactNode })
   const handleLogout = async () => {
     try {
         // 1. Cắt đứt kết nối với Firebase (Quan trọng nhất)
-        await signOut(auth);
+        if (auth) {
+            await signOut(auth);
+        }
         
         // 2. Xóa sạch bộ nhớ trình duyệt (localStorage, sessionStorage)
         if (typeof window !== 'undefined') {

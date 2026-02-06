@@ -53,8 +53,13 @@ export default function FarmPage() {
     useEffect(() => {
         const initData = async () => {
             if (!user) return;
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                setLoading(false);
+                return;
+            }
             try {
-                const token = await auth?.currentUser?.getIdToken();
+                const token = await auth.currentUser?.getIdToken();
                 const headers = { Authorization: `Bearer ${token}` };
 
                 const [farmRes, meRes] = await Promise.all([
@@ -99,13 +104,18 @@ export default function FarmPage() {
     useEffect(() => {
         const fetchStats = async () => {
             if (!selectedFarm) return;
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                setLoading(false);
+                return;
+            }
             // Keep loading true while switching or initial load? 
             // Maybe not full page loading, but specific section. 
             // For simplicity, we won't toggle full page `loading` here to avoid flashing, 
             // but we could have a `statsLoading` state.
 
             try {
-                const token = await auth?.currentUser?.getIdToken();
+                const token = await auth.currentUser?.getIdToken();
                 const headers = { Authorization: `Bearer ${token}` };
 
                 // Pass farmId query param
@@ -128,8 +138,12 @@ export default function FarmPage() {
     useEffect(() => {
         const fetchGroupedTasks = async () => {
             if (!selectedFarm) return;
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                return;
+            }
             try {
-                const token = await auth?.currentUser?.getIdToken();
+                const token = await auth.currentUser?.getIdToken();
                 // 1. Fetch Active Seasons
                 const seasonRes = await axios.get(`http://localhost:5001/api/seasons/farm/${selectedFarm.id}?status=active`, {
                     headers: { Authorization: `Bearer ${token}` }
@@ -341,8 +355,16 @@ export default function FarmPage() {
                                                         setSeasonTasks(prev => prev.map(s =>
                                                             s.id === season.id ? { ...s, tasks: s.tasks.filter(t => t.id !== task.id) } : s
                                                         ));
+                                                        if (!auth) {
+                                                            console.error('Firebase auth not initialized');
+                                                            return;
+                                                        }
                                                         try {
-                                                            const token = await auth?.currentUser?.getIdToken();
+                                                            const token = await auth.currentUser?.getIdToken();
+                                                            if (!token) {
+                                                                console.error('No auth token');
+                                                                return;
+                                                            }
                                                             await axios.put(`http://localhost:5001/api/tasks/${task.id}/toggle`, {}, {
                                                                 headers: { Authorization: `Bearer ${token}` }
                                                             });

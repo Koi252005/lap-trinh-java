@@ -71,8 +71,13 @@ function SeasonDetailContent() {
             setSeason(res.data);
 
             // Also fetch tasks for this season
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                return;
+            }
+            const token = await auth.currentUser?.getIdToken();
             const taskRes = await axios.get(`http://localhost:5001/api/tasks?seasonId=${id}`, {
-                headers: { Authorization: `Bearer ${await auth.currentUser?.getIdToken()}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             setTasks(taskRes.data.tasks);
 
@@ -85,8 +90,16 @@ function SeasonDetailContent() {
 
     const handleAddTask = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         try {
             const token = await auth.currentUser?.getIdToken();
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                return;
+            }
             const res = await axios.post('http://localhost:5001/api/tasks', {
                 title: newTaskTitle,
                 seasonId: id,
@@ -106,8 +119,18 @@ function SeasonDetailContent() {
         // Optimistic
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t));
 
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t));
+            return;
+        }
         try {
             const token = await auth.currentUser?.getIdToken();
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                setTasks(prev => prev.map(t => t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t));
+                return;
+            }
             await axios.put(`http://localhost:5001/api/tasks/${taskId}/toggle`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -119,6 +142,10 @@ function SeasonDetailContent() {
 
     const handleAddProcess = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         setAdding(true);
         try {
             const token = await auth.currentUser?.getIdToken();
@@ -145,9 +172,18 @@ function SeasonDetailContent() {
 
     const handleExport = async () => {
         if (!confirm('Bạn có chắc muốn kết thúc vụ mùa và xuất mã QR không? Hành động này sẽ khóa vụ mùa.')) return;
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         setExporting(true);
         try {
             const token = await auth.currentUser?.getIdToken();
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                setExporting(false);
+                return;
+            }
             const res = await axios.post(`http://localhost:5001/api/seasons/${id}/export`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });

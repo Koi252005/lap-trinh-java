@@ -43,31 +43,23 @@ export default function RetailerProfile() {
         setIsLoading(true);
         setMessage({ type: '', text: '' });
 
+        if (!auth) {
+            setMessage({ type: 'error', text: 'Firebase chưa được cấu hình' });
+            setIsLoading(false);
+            return;
+        }
+        if (!user) {
+            setMessage({ type: 'error', text: 'Vui lòng đăng nhập' });
+            setIsLoading(false);
+            return;
+        }
         try {
-            const token = await auth.currentUser?.getIdToken();
-            // Actually, for API calls we usually need to pass the token in header if using authMiddleware
-            // But here we rely on the backend session or token passing mechanism.
-            // Let's assume axios interceptor or manual token header.
-            // Since I don't see global axios config, I'll try to get token from auth context user object if it's a firebase user.
-
-            // Wait, useAuth user object usually has `accessToken` or we need `auth.currentUser.getIdToken()`.
-            // Let's assume the standard way:
-
-            if (!user) return;
-
-            // Note: The `user` object from `useAuth` might be the mixed object (firebase + sql).
-            // If it supports getIdToken(), it's a Firebase object wrapper.
-            // If not, we might need to import `auth` from firebase config.
-            // Let's stick to standard fetch with token if possible, or axios.
-
-            // Checking how other components do it? I don't have other examples open.
-            // I'll assume `user.accessToken` might be available or I need to fetch it.
-            // Let's just try to send the request. If 401, I'll fix it.
-            // Wait, `useAuth` context usually exposes `callProtectedApi` or similar? 
-            // Looking at `AuthContext.tsx` in `list_dir` output earlier... I didn't read it.
-            // I'll assume I need to get the token.
-
             const idToken = await auth.currentUser?.getIdToken();
+            if (!idToken) {
+                setMessage({ type: 'error', text: 'Vui lòng đăng nhập lại' });
+                setIsLoading(false);
+                return;
+            }
 
             const res = await axios.put('http://localhost:5001/api/auth/profile', formData, {
                 headers: {

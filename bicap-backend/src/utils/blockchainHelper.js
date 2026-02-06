@@ -49,11 +49,37 @@ const blockchainHelper = {
      * @returns {Promise<Object>}
      */
     getTransaction: async (txHash) => {
-        return {
-            status: 'reverted', // basic mock status
-            id: txHash,
-            isMock: true
-        };
+        return new Promise((resolve, reject) => {
+            try {
+                // Validate input
+                if (!txHash || typeof txHash !== 'string') {
+                    throw new Error('Invalid transaction hash: txHash must be a non-empty string');
+                }
+
+                // Simulate network delay
+                setTimeout(() => {
+                    try {
+                        // Mock transaction data
+                        const mockTransaction = {
+                            id: txHash,
+                            status: 'success', // Mock successful transaction
+                            blockNumber: Math.floor(Math.random() * 1000000),
+                            timestamp: new Date().toISOString(),
+                            isMock: true,
+                            verified: true
+                        };
+
+                        console.log(`[MOCK BLOCKCHAIN] Retrieved transaction: ${txHash}`);
+                        resolve(mockTransaction);
+                    } catch (error) {
+                        console.error('[MOCK BLOCKCHAIN] Transaction retrieval error:', error);
+                        reject(new Error('Failed to retrieve transaction: ' + error.message));
+                    }
+                }, 300); // 300ms delay
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 };
 

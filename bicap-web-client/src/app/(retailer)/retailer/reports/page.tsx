@@ -35,6 +35,11 @@ export default function RetailerReports() {
     }, [user]);
 
     const fetchReports = async () => {
+        if (!auth) {
+            console.error('Firebase auth not initialized');
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const token = await auth.currentUser?.getIdToken();
@@ -52,9 +57,18 @@ export default function RetailerReports() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         setIsSubmitting(true);
         try {
             const token = await auth.currentUser?.getIdToken();
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                setIsSubmitting(false);
+                return;
+            }
             // Receiver defaults to 'admin' in backend if not specified, 
             // or we might need to specify receiverRole='admin' or 'farm' if reporting farm.
             // Requirement says "Gửi báo cáo cho Admin"

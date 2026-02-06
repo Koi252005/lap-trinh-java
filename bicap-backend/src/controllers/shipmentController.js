@@ -112,29 +112,40 @@ exports.createShipment = async (req, res) => {
         order.status = 'shipping';
         await order.save();
 
-        // 7. Blockchain Log (Mock)
-        const txHash = await blockchainHelper.writeToBlockchain({
-            type: 'CREATE_SHIPMENT',
-            shipmentId: newShipment.id,
-            orderId,
-            managerId,
-            timestamp: new Date().toISOString()
-        });
+        // 7. Blockchain Log (Mock) - Non-fatal if fails
+        let txHash;
+        try {
+            txHash = await blockchainHelper.writeToBlockchain({
+                type: 'CREATE_SHIPMENT',
+                shipmentId: newShipment.id,
+                orderId,
+                managerId,
+                timestamp: new Date().toISOString()
+            });
+        } catch (blockchainError) {
+            console.error('Blockchain error (non-fatal):', blockchainError);
+            txHash = null; // Continue even if blockchain fails
+        }
 
         // 8. Notification (Mock)
         // Notify retailer
-        const { createNotificationInternal } = require('./notificationController');
-        await createNotificationInternal(
-            order.retailerId,
-            'Yêu cầu vận chuyển mới',
-            `Đơn hàng #${order.id} đã được yêu cầu vận chuyển.`,
-            'shipment'
-        );
+        try {
+            const { createNotificationInternal } = require('./notificationController');
+            await createNotificationInternal(
+                order.retailerId,
+                'Yêu cầu vận chuyển mới',
+                `Đơn hàng #${order.id} đã được yêu cầu vận chuyển.`,
+                'shipment'
+            );
+        } catch (notifError) {
+            console.warn('Failed to send notification:', notifError.message);
+            // Non-fatal: continue
+        }
 
         res.status(201).json({
             message: driverId ? 'Tạo vận đơn thành công' : 'Đã gửi yêu cầu vận chuyển thành công',
             shipment: newShipment,
-            txHash
+            txHash: txHash || 'Blockchain chưa sẵn sàng'
         });
 
     } catch (error) {

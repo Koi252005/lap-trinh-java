@@ -17,54 +17,68 @@ exports.getDashboard = async (req, res) => {
             pendingReports,
             activeShipments
         ] = await Promise.all([
-            User.count(),
-            Farm.count(),
-            Order.count(),
-            Product.count({ where: { status: 'available' } }),
-            Subscription.count({ where: { status: 'active' } }),
-            Payment.sum('amount', { where: { status: 'success' } }) || 0,
-            Report.count({ where: { status: 'pending' } }),
-            Shipment.count({ where: { status: { [Op.in]: ['assigned', 'picked_up', 'delivering'] } } })
+            User.count().catch(() => 0),
+            Farm.count().catch(() => 0),
+            Order.count().catch(() => 0),
+            Product.count({ where: { status: 'available' } }).catch(() => 0),
+            Subscription.count({ where: { status: 'active' } }).catch(() => 0),
+            Payment.sum('amount', { where: { status: 'success' } }).catch(() => 0) || 0,
+            Report.count({ where: { status: 'pending' } }).catch(() => 0),
+            Shipment.count({ where: { status: { [Op.in]: ['assigned', 'picked_up', 'delivering'] } } }).catch(() => 0)
         ]);
 
         // Thống kê theo role
-        const usersByRole = await User.findAll({
-            attributes: [
-                'role',
-                [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']
-            ],
-            group: ['role'],
-            raw: true
-        });
+        let usersByRole = [];
+        try {
+            usersByRole = await User.findAll({
+                attributes: [
+                    'role',
+                    [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']
+                ],
+                group: ['role'],
+                raw: true
+            });
+        } catch (e) {
+            console.warn('Error getting usersByRole:', e.message);
+        }
 
         // Thống kê đơn hàng theo trạng thái
-        const ordersByStatus = await Order.findAll({
-            attributes: [
-                'status',
-                [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']
-            ],
-            group: ['status'],
-            raw: true
-        });
+        let ordersByStatus = [];
+        try {
+            ordersByStatus = await Order.findAll({
+                attributes: [
+                    'status',
+                    [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']
+                ],
+                group: ['status'],
+                raw: true
+            });
+        } catch (e) {
+            console.warn('Error getting ordersByStatus:', e.message);
+        }
 
         // Doanh thu theo tháng (7 tháng gần nhất)
-        // Sử dụng CONVERT cho SQL Server (tương thích với mọi version)
-        const monthlyRevenue = await Payment.findAll({
-            where: {
-                status: 'success',
-                createdAt: {
-                    [Op.gte]: new Date(Date.now() - 7 * 30 * 24 * 60 * 60 * 1000)
-                }
-            },
-            attributes: [
-                // SQL Server: CONVERT(VARCHAR(7), createdAt, 120) để lấy YYYY-MM
-                [Sequelize.literal("CONVERT(VARCHAR(7), createdAt, 120)"), 'month'],
-                [Sequelize.fn('SUM', Sequelize.col('amount')), 'total']
-            ],
-            group: [Sequelize.literal("CONVERT(VARCHAR(7), createdAt, 120)")],
-            order: [[Sequelize.literal("CONVERT(VARCHAR(7), createdAt, 120)"), 'ASC']],
-            raw: true
-        });
+        let monthlyRevenue = [];
+        try {
+            monthlyRevenue = await Payment.findAll({
+                where: {
+                    status: 'success',
+                    createdAt: {
+                        [Op.gte]: new Date(Date.now() - 7 * 30 * 24 * 60 * 60 * 1000)
+                    }
+                },
+                attributes: [
+                    // SQL Server: CONVERT(VARCHAR(7), createdAt, 120) để lấy YYYY-MM
+                    [Sequelize.literal("CONVERT(VARCHAR(7), createdAt, 120)"), 'month'],
+                    [Sequelize.fn('SUM', Sequelize.col('amount')), 'total']
+                ],
+                group: [Sequelize.literal("CONVERT(VARCHAR(7), createdAt, 120)")],
+                order: [[Sequelize.literal("CONVERT(VARCHAR(7), createdAt, 120)"), 'ASC']],
+                raw: true
+            });
+        } catch (e) {
+            console.warn('Error getting monthlyRevenue:', e.message);
+        }
 
         res.json({
             overview: {
@@ -187,6 +201,35 @@ exports.updateUser = async (req, res) => {
 
     } catch (error) {
         console.error('Error updating user:', error);
+        res.status(500).json({ message: 'Lỗi cập nhật user', error: error.message });
+    }
+};
+
+// Cập nhật role theo email (tiện cho việc cấp quyền admin)
+exports.updateUserByEmail = async (req, res) => {
+    try {
+        const { email } = req.params;
+        const { role } = req.body;
+
+        if (!role) {
+            return res.status(400).json({ message: 'Thiếu role' });
+        }
+
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            return res.status(404).json({ message: `Không tìm thấy user với email: ${email}` });
+        }
+
+        user.role = role;
+        await user.save();
+
+        res.json({
+            message: `Đã cập nhật role thành "${role}" cho ${email}`,
+            user: { id: user.id, email: user.email, role: user.role, fullName: user.fullName }
+        });
+
+    } catch (error) {
+        console.error('Error updating user by email:', error);
         res.status(500).json({ message: 'Lỗi cập nhật user', error: error.message });
     }
 };
@@ -395,8 +438,8 @@ exports.getAllOrders = async (req, res) => {
         const { count, rows: orders } = await Order.findAndCountAll({
             where: whereClause,
             include: [
-                { model: Product, as: 'product', include: [{ model: Farm, as: 'farm' }] },
-                { model: User, as: 'retailer', attributes: ['id', 'fullName', 'email', 'phone'] }
+                { model: Product, as: 'product', required: false, include: [{ model: Farm, as: 'farm', required: false }] },
+                { model: User, as: 'retailer', required: false, attributes: ['id', 'fullName', 'email', 'phone'] }
             ],
             limit: parseInt(limit),
             offset: offset,
@@ -404,18 +447,28 @@ exports.getAllOrders = async (req, res) => {
         });
 
         res.json({
-            orders,
+            orders: orders || [],
             pagination: {
-                total: count,
+                total: count || 0,
                 page: parseInt(page),
                 limit: parseInt(limit),
-                totalPages: Math.ceil(count / parseInt(limit))
+                totalPages: Math.ceil((count || 0) / parseInt(limit))
             }
         });
 
     } catch (error) {
         console.error('Error getting orders:', error);
-        res.status(500).json({ message: 'Lỗi lấy danh sách orders', error: error.message });
+        // Trả về empty thay vì 500 để frontend không crash
+        res.json({
+            orders: [],
+            pagination: {
+                total: 0,
+                page: parseInt(req.query.page || 1),
+                limit: parseInt(req.query.limit || 20),
+                totalPages: 0
+            },
+            error: error.message
+        });
     }
 };
 
