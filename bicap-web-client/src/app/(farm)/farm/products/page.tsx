@@ -37,8 +37,8 @@ export default function FarmProductManager() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
 
-    // Form State
-    const [completedSeasons, setCompletedSeasons] = useState<Season[]>([]);
+    // Form State - vụ mùa có thể chọn để đăng bán (cả đang diễn ra và đã kết thúc)
+    const [selectableSeasons, setSelectableSeasons] = useState<Season[]>([]);
     const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
     const [productName, setProductName] = useState('');
     const [price, setPrice] = useState('');
@@ -54,7 +54,7 @@ export default function FarmProductManager() {
     useEffect(() => {
         if (selectedFarmId) {
             fetchProducts(selectedFarmId);
-            fetchCompletedSeasons(selectedFarmId);
+            fetchSelectableSeasons(selectedFarmId);
         }
     }, [selectedFarmId]);
 
@@ -91,15 +91,15 @@ export default function FarmProductManager() {
         }
     };
 
-    const fetchCompletedSeasons = async (farmId: number) => {
+    const fetchSelectableSeasons = async (farmId: number) => {
         try {
             const token = await auth?.currentUser?.getIdToken();
             const res = await axios.get(`http://localhost:5001/api/seasons/farm/${farmId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            // Filter only completed seasons
-            const completed = res.data.filter((s: any) => s.status === 'completed');
-            setCompletedSeasons(completed);
+            // Hiển thị cả vụ đang diễn ra (active) và đã kết thúc (completed) để chọn đăng bán
+            const list = (res.data || []).filter((s: any) => s.status === 'active' || s.status === 'completed');
+            setSelectableSeasons(list);
         } catch (error) {
             console.error(error);
         }
@@ -200,7 +200,7 @@ export default function FarmProductManager() {
                         <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Đăng Bán Nông Sản</h2>
                         <form onSubmit={handlePostProduct} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Chọn Vụ Mùa (Đã kết thúc)</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Chọn Vụ Mùa</label>
                                 <select 
                                     className="mt-1 block w-full rounded-md border border-gray-300 p-2"
                                     required
@@ -208,11 +208,13 @@ export default function FarmProductManager() {
                                     onChange={e => setSelectedSeasonId(e.target.value)}
                                 >
                                     <option value="">-- Chọn vụ mùa --</option>
-                                    {completedSeasons.map(s => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    {selectableSeasons.map((s: any) => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.name} {s.status === 'active' ? '(Đang diễn ra)' : '(Đã kết thúc)'}
+                                        </option>
                                     ))}
                                 </select>
-                                {completedSeasons.length === 0 && <p className="text-xs text-red-500 mt-1">Không có vụ mùa nào đã kết thúc để bán.</p>}
+                                {selectableSeasons.length === 0 && <p className="text-xs text-amber-600 mt-1">Chưa có vụ mùa nào. Hãy tạo vụ mùa tại Mùa vụ trước.</p>}
                             </div>
 
                             <div>

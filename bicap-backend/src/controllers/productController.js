@@ -39,15 +39,16 @@ exports.createProduct = async (req, res) => {
       return res.status(403).json({ message: 'Bạn không có quyền thêm sản phẩm vào trại này' });
     }
 
-    // Validate Season if provided (Traceability)
+    // Validate Season if provided (Traceability) - cho phép cả vụ đang diễn ra (active) và đã kết thúc (completed)
     if (seasonId) {
       const season = await FarmingSeason.findOne({ where: { id: seasonId, farmId } });
       if (!season) {
         return res.status(400).json({ message: 'Vụ mùa không hợp lệ' });
       }
-      if (season.status !== 'completed') {
-        return res.status(400).json({ message: 'Vụ mùa chưa kết thúc, chưa thể đăng bán sản phẩm' });
+      if (season.status === 'cancelled') {
+        return res.status(400).json({ message: 'Vụ mùa đã bị hủy, không thể đăng bán sản phẩm' });
       }
+      // active hoặc completed đều được đăng bán
     }
 
     const newProductData = {
