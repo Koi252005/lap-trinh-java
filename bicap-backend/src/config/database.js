@@ -2,7 +2,12 @@ const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 // Host: DB_SERVER (Docker: sql_server) hoặc DB_HOST hoặc localhost (chạy local)
-const dbHost = process.env.DB_SERVER || process.env.DB_HOST || 'localhost';
+let dbHost = process.env.DB_SERVER || process.env.DB_HOST || 'localhost';
+// Khi chạy backend trên máy (không trong Docker), "sql_server" không phân giải → dùng localhost
+if (dbHost === 'sql_server' && !process.env.RUNNING_IN_DOCKER) {
+  dbHost = 'localhost';
+  console.log('📍 DB host "sql_server" → dùng localhost (chạy local, không trong Docker)');
+}
 // Docker-compose dùng DB_PASS, thường thì dùng DB_PASSWORD
 const dbPassword = process.env.DB_PASSWORD || process.env.DB_PASS || '';
 

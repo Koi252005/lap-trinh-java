@@ -28,6 +28,7 @@ services:
     env_file:             
       - ./bicap-backend/.env
     environment:
+      - RUNNING_IN_DOCKER=1
       - DB_SERVER=sql_server
       - DB_HOST=sql_server
       - DB_USER=sa
