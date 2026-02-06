@@ -12,37 +12,45 @@ exports.getAllShipments = async (req, res) => {
             include: [
                 { 
                     model: User, 
-                    as: 'driver', // Phải khớp với alias trong models/index.js
+                    as: 'driver',
                     attributes: ['id', 'fullName', 'phone'] 
                 },
                 {
                     model: Order,
                     as: 'order',
-                    attributes: ['id', 'status'],
+                    attributes: ['id', 'status', 'pickupAddress', 'deliveryAddress'],
                     include: [
                         { model: Product, as: 'product', attributes: ['name', 'price'] }
                     ]
                 }
             ],
-            order: [['createdAt', 'DESC']] // Đơn mới nhất lên đầu
+            order: [['createdAt', 'DESC']]
         });
 
-        // Format dữ liệu cho Frontend dễ hiển thị
-        const data = shipments.map(s => ({
-            id: s.id,
-            diemDi: s.pickupLocation || "Kho Trung Tâm",
-            diemDen: s.deliveryLocation || "Khách hàng",
-            taiXe: s.driver ? s.driver.fullName : "Chưa phân công",
-            status: s.status, // Giữ nguyên trạng thái từ DB (assigned, picked_up...)
-            details: {
-                // Tạo mã QR từ ID thật
-                qrCode: s.pickupQRCode || `SHIPMENT_${s.id}`,
-                vehicle: s.driver?.vehicleType || "Xe tải",
-                type: s.order?.product?.name || "Hàng hóa",
-                weight: "---", // Nếu DB có cột weight thì thay vào đây
-                time: s.updatedAt
-            }
-        }));
+        const data = shipments.map(s => {
+            const order = s.order;
+            const pickupAddr = (s.pickupLocation && s.pickupLocation.trim() && s.pickupLocation !== 'Chưa cập nhật') 
+                ? s.pickupLocation 
+                : (order?.pickupAddress?.trim() ? order.pickupAddress : 'Chưa cập nhật');
+            const deliveryAddr = (s.deliveryLocation && s.deliveryLocation.trim() && s.deliveryLocation !== 'Chưa cập nhật') 
+                ? s.deliveryLocation 
+                : (order?.deliveryAddress?.trim() ? order.deliveryAddress : 'Chưa cập nhật');
+            return {
+                id: s.id,
+                diemDi: pickupAddr,
+                diemDen: deliveryAddr,
+                taiXe: s.driver ? s.driver.fullName : "Chưa phân công",
+                status: s.status,
+                vehicleInfo: s.vehicleInfo,
+                details: {
+                    qrCode: s.pickupQRCode || `SHIPMENT_${s.id}`,
+                    vehicle: s.vehicleInfo || s.driver?.vehicleType || "Xe tải",
+                    type: s.order?.product?.name || "Hàng hóa",
+                    weight: "---",
+                    time: s.updatedAt
+                }
+            };
+        });
 
         res.status(200).json(data);
 
@@ -55,8 +63,9 @@ exports.getAllShipments = async (req, res) => {
 // 1. Tạo đơn vận chuyển (Chỉ khi Order đã confirmed)
 exports.createShipment = async (req, res) => {
     try {
-        const { orderId, driverId, vehicleInfo, pickupTime, estimatedDeliveryTime } = req.body;
-        const managerId = req.user.id; // Farm Owner creates the request
+        const { orderId, driverId, vehicleInfo, pickupTime, estimatedDeliveryTime, pickupLocation, deliveryLocation } = req.body;
+        const managerId = req.user.id;
+        const isShippingRole = ['shipping', 'shipping_manager', 'admin'].includes(req.user.role);
 
         // 1. Verify Order
         const order = await Order.findOne({
@@ -70,12 +79,11 @@ exports.createShipment = async (req, res) => {
 
         if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
 
-        // 2. Authorization: Manager must be the Farm Owner
-        // Note: Check if managerId matches order.product.farm.ownerId
-        // console.log('Check ownership:', order.product?.farm?.ownerId, managerId);
-
-        if (!order.product || !order.product.farm || order.product.farm.ownerId !== managerId) {
-            return res.status(403).json({ message: 'Bạn không có quyền tạo vận đơn cho đơn hàng này' });
+        // 2. Authorization: Farm owner HOẶC Shipping/Admin được tạo vận đơn
+        if (!isShippingRole) {
+            if (!order.product || !order.product.farm || order.product.farm.ownerId !== managerId) {
+                return res.status(403).json({ message: 'Bạn không có quyền tạo vận đơn cho đơn hàng này' });
+            }
         }
 
         if (order.status !== 'confirmed') {
@@ -88,24 +96,25 @@ exports.createShipment = async (req, res) => {
             return res.status(400).json({ message: 'Đơn hàng này đã có vận đơn' });
         }
 
-        // 4. Determine Status
-        // If driver info is missing, it's a request -> 'pending_pickup'
-        let initialStatus = 'pending_pickup';
-        if (driverId && vehicleInfo) {
-            initialStatus = 'shipping';
-        }
+        // 4. Điểm lấy hàng & điểm đến: từ body hoặc từ đơn hàng (ưu tiên địa chỉ cụ thể)
+        const pickupAddr = (pickupLocation && pickupLocation.trim()) || (order.pickupAddress && order.pickupAddress.trim()) || (order.product?.farm?.address ? `Trang trại: ${order.product.farm.address}` : null) || 'Chưa cập nhật';
+        const deliveryAddr = (deliveryLocation && deliveryLocation.trim()) || (order.deliveryAddress && order.deliveryAddress.trim()) || 'Chưa cập nhật';
 
-        // 5. Create Shipment
+        // 5. Status: có tài xế thì luôn assigned (đi giao), mặc định vehicleInfo nếu chưa có
+        const finalVehicleInfo = (vehicleInfo && vehicleInfo.trim()) || (driverId ? 'Xe tải' : null);
+        let initialStatus = 'created';
+        if (driverId) initialStatus = 'assigned';
+
+        // 6. Create Shipment (chỉ các field có trong model)
         const newShipment = await Shipment.create({
-            trackingNumber: `SHIP-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
             orderId,
             managerId,
             driverId: driverId || null,
-            vehicleInfo: vehicleInfo || null,
+            vehicleInfo: finalVehicleInfo,
             status: initialStatus,
             pickupTime: pickupTime || null,
-            estimatedDeliveryTime: estimatedDeliveryTime || null,
-            notes: driverId ? 'Farm Owner created shipment with driver' : 'Farm Owner requested shipping'
+            pickupLocation: pickupAddr,
+            deliveryLocation: deliveryAddr
         });
 
         // 6. Update Order Status
