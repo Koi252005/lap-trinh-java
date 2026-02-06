@@ -14,6 +14,8 @@ interface Order {
     totalPrice: number;
     status: string;
     createdAt: string;
+    pickupAddress?: string | null;
+    deliveryAddress?: string | null;
     product: {
         name: string;
         price: number;
@@ -134,7 +136,7 @@ export default function FarmOrderManager() {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Quản Lý Đơn Hàng</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Chủ trại xác nhận đơn tại đây: bấm &quot;Duyệt&quot; để xác nhận hoặc &quot;Hủy&quot; để từ chối.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Chủ trại xác nhận đơn tại đây: bấm &quot;Duyệt&quot; để xác nhận hoặc &quot;Hủy&quot; để từ chối. Địa chỉ lấy/giao do khách hàng (nhà bán lẻ) nhập khi đặt hàng.</p>
                 </div>
                 <Link href="/farm/shipments" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                     🚚 Xem Danh Sách Vận Chuyển
@@ -161,6 +163,7 @@ export default function FarmOrderManager() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã Đơn</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sản Phẩm</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách Hàng</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Điểm lấy / Điểm đến</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng Tiền</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng Thái</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành Động</th>
@@ -169,7 +172,7 @@ export default function FarmOrderManager() {
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {orders.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">Chưa có đơn hàng nào.</td>
+                                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">Chưa có đơn hàng nào.</td>
                             </tr>
                         ) : (
                             orders.map(order => (
@@ -179,7 +182,7 @@ export default function FarmOrderManager() {
                                         <div className="text-sm font-medium text-gray-900 dark:text-white">{order.product.name}</div>
                                         <div className="text-sm text-gray-500">x {order.quantity} kg</div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-6 py-4">
                                         <div className="text-sm text-gray-900 dark:text-white font-medium">{order.retailer.fullName}</div>
                                         <div className="text-xs text-blue-600 cursor-pointer hover:underline"
                                             onClick={() => {
@@ -189,6 +192,10 @@ export default function FarmOrderManager() {
                                         >
                                             Xem chi tiết
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-600 max-w-[200px]">
+                                        <div className="truncate" title={order.pickupAddress || ''}>Lấy: {order.pickupAddress || '—'}</div>
+                                        <div className="truncate mt-0.5" title={order.deliveryAddress || ''}>Giao: {order.deliveryAddress || '—'}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
                                         {Number(order.totalPrice).toLocaleString()} đ

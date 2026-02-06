@@ -11,6 +11,8 @@ interface OrderRow {
   totalPrice: number;
   status: string;
   createdAt: string;
+  pickupAddress?: string | null;
+  deliveryAddress?: string | null;
   product: {
     name: string;
     farm?: { name: string };
@@ -143,6 +145,7 @@ export default function AdminOrdersPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Sản phẩm</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Trang trại</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Khách hàng</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Điểm lấy / Điểm đến</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tổng tiền</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Trạng thái</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ngày tạo</th>
@@ -152,7 +155,7 @@ export default function AdminOrdersPage() {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center">
+                  <td colSpan={9} className="px-4 py-8 text-center">
                     <div className="text-gray-500">
                       <p className="font-medium mb-2">Chưa có đơn hàng nào trong database.</p>
                       <p className="text-sm text-gray-400">
@@ -176,6 +179,10 @@ export default function AdminOrdersPage() {
                       {order.retailer?.email && (
                         <div className="text-xs text-gray-500">{order.retailer.email}</div>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[180px]">
+                      <div className="truncate" title={order.pickupAddress || ''}>Lấy: {order.pickupAddress || '—'}</div>
+                      <div className="truncate mt-0.5" title={order.deliveryAddress || ''}>Giao: {order.deliveryAddress || '—'}</div>
                     </td>
                     <td className="px-4 py-3 text-sm font-semibold text-green-600">
                       {Number(order.totalPrice).toLocaleString('vi-VN')} đ

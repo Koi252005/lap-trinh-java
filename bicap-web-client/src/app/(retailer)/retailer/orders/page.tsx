@@ -18,6 +18,8 @@ interface Order {
   totalPrice: number;
   status: string;
   createdAt: string;
+  pickupAddress?: string | null;
+  deliveryAddress?: string | null;
 }
 
 export default function RetailerOrders() {
@@ -104,6 +106,7 @@ export default function RetailerOrders() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Mã ĐH</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sản phẩm</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Trang trại</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Địa chỉ giao</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tổng tiền</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Trạng thái</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ngày tạo</th>
@@ -119,6 +122,9 @@ export default function RetailerOrders() {
                       <span className="text-xs text-gray-500">x{order.quantity}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{order.product?.farm?.name ?? '—'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 max-w-[200px] truncate" title={order.deliveryAddress || ''}>
+                      {order.deliveryAddress || '—'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                       {Number(order.totalPrice).toLocaleString('vi-VN')} đ
                     </td>

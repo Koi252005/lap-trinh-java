@@ -27,6 +27,8 @@ interface OrderDetail {
     status: string;
     createdAt: string;
     contractTerms?: string;
+    pickupAddress?: string | null;
+    deliveryAddress?: string | null;
 }
 
 export default function RetailerOrderDetail() {
@@ -51,7 +53,7 @@ export default function RetailerOrderDetail() {
         }
         const fetchOrder = async () => {
             try {
-                const token = await auth.currentUser?.getIdToken();
+                const token = await auth?.currentUser?.getIdToken();
                 const res = await axios.get(`${API_BASE}/orders/my-orders`, {
                     headers: { Authorization: `Bearer ${token}` },
                     validateStatus: () => true,
@@ -77,7 +79,7 @@ export default function RetailerOrderDetail() {
         }
         setActionLoading(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             if (!token) {
                 alert('Vui lòng đăng nhập lại');
                 setActionLoading(false);
@@ -133,7 +135,7 @@ export default function RetailerOrderDetail() {
                 }
             }
 
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             if (!token) {
                 alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
                 setActionLoading(false);
@@ -170,7 +172,7 @@ export default function RetailerOrderDetail() {
             return;
         }
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             if (!token) {
                 alert('Vui lòng đăng nhập lại');
                 return;
@@ -193,7 +195,7 @@ export default function RetailerOrderDetail() {
             return;
         }
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             if (!token) {
                 alert('Vui lòng đăng nhập lại');
                 return;
@@ -225,7 +227,7 @@ export default function RetailerOrderDetail() {
         }
         setActionLoading(true);
         try {
-            const token = await auth.currentUser?.getIdToken();
+            const token = await auth?.currentUser?.getIdToken();
             if (!token) {
                 alert('Vui lòng đăng nhập lại');
                 setActionLoading(false);
@@ -350,6 +352,21 @@ export default function RetailerOrderDetail() {
                                         <span>Tiền cọc (30%):</span>
                                         <span>{(Number(order.totalPrice) * 0.3).toLocaleString()} đ</span>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Địa chỉ lấy hàng & giao hàng */}
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Địa chỉ giao hàng</h3>
+                            <div className="space-y-3 text-sm">
+                                <div>
+                                    <span className="text-gray-500 block mb-1">Điểm lấy hàng:</span>
+                                    <p className="font-medium text-gray-800 dark:text-gray-200">{order.pickupAddress || '—'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500 block mb-1">Điểm đến (giao hàng):</span>
+                                    <p className="font-medium text-gray-800 dark:text-gray-200">{order.deliveryAddress || '—'}</p>
                                 </div>
                             </div>
                         </div>
