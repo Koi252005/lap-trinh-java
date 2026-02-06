@@ -2,74 +2,105 @@
 const { Order, Product, Farm, User } = require('../models');
 const { getFileUrl } = require('../middleware/uploadMiddleware');
 
+// Helper: lấy hoặc tạo user từ Firebase token
+async function getOrCreateRetailerId(req) {
+    if (req.user && req.user.id) return req.user.id;
+    if (!req.userFirebase || !req.userFirebase.uid) return null;
+    const uid = req.userFirebase.uid;
+    // Tìm theo firebaseUid
+    let user = await User.findOne({ where: { firebaseUid: uid } });
+    if (user) return user.id;
+    // Email phải unique và hợp lệ
+    const email = (req.userFirebase.email && String(req.userFirebase.email).includes('@'))
+        ? req.userFirebase.email
+        : `user.${uid.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20)}@bicap.local`;
+    const fullName = req.userFirebase.name || req.userFirebase.email || 'Người dùng';
+    try {
+        user = await User.create({
+            firebaseUid: uid,
+            email,
+            fullName: fullName.substring(0, 255) || 'Người dùng',
+            role: 'retailer',
+            status: 'active'
+        });
+        return user.id;
+    } catch (err) {
+        if (err.name === 'SequelizeUniqueConstraintError') {
+            user = await User.findOne({ where: { firebaseUid: uid } });
+            if (user) return user.id;
+        }
+        throw err;
+    }
+}
+
 // 1. Tạo đơn hàng (Retailer mua từ Marketplace)
 exports.createOrder = async (req, res) => {
     try {
-        const { productId: rawProductId, quantity, contractTerms } = req.body;
+        const { productId: rawProductId, quantity, contractTerms } = req.body || {};
         const productId = parseInt(rawProductId, 10);
-        if (!rawProductId || isNaN(productId) || productId < 1) {
-            return res.status(400).json({ message: 'Mã sản phẩm không hợp lệ' });
-        }
-        
-        // Đảm bảo có user - tìm hoặc tạo nếu chưa có
-        let retailerId;
-        if (req.user && req.user.id) {
-            retailerId = req.user.id;
-        } else if (req.userFirebase && req.userFirebase.uid) {
-            // Tìm hoặc tạo user (findOrCreate để tránh duplicate)
-            const [user, created] = await User.findOrCreate({
-                where: { firebaseUid: req.userFirebase.uid },
-                defaults: {
-                    email: req.userFirebase.email || `user_${req.userFirebase.uid.substring(0, 8)}@example.com`,
-                    fullName: req.userFirebase.name || 'Người dùng',
-                    role: 'retailer',
-                    status: 'active'
-                }
-            });
-            retailerId = user.id;
-        } else {
-            return res.status(401).json({ message: 'Unauthorized - Vui lòng đăng nhập lại' });
+        if (rawProductId === undefined || rawProductId === null || isNaN(productId) || productId < 1) {
+            return res.status(400).json({ message: 'Mã sản phẩm không hợp lệ', code: 'INVALID_PRODUCT_ID' });
         }
 
-        // Kiểm tra sản phẩm
+        let retailerId;
+        try {
+            retailerId = await getOrCreateRetailerId(req);
+        } catch (userErr) {
+            console.error('[createOrder] User resolution failed:', userErr);
+            return res.status(400).json({
+                message: 'Không thể xác định tài khoản. Vui lòng đăng xuất, đăng nhập lại rồi thử đặt hàng.',
+                error: userErr.message,
+                code: 'USER_SYNC'
+            });
+        }
+        if (!retailerId) {
+            return res.status(401).json({ message: 'Vui lòng đăng nhập để đặt hàng.', code: 'UNAUTHORIZED' });
+        }
+
         const product = await Product.findByPk(productId);
         if (!product) {
             return res.status(404).json({
                 message: 'Sản phẩm không tồn tại. Bấm "Tạo sản phẩm mẫu" trên trang Sàn rồi thử lại.',
-                needsSeed: true
+                needsSeed: true,
+                code: 'PRODUCT_NOT_FOUND'
             });
         }
         if (product.status !== 'available') {
-            return res.status(400).json({ message: 'Sản phẩm không còn bán (trạng thái: ' + product.status + ')' });
+            return res.status(400).json({
+                message: 'Sản phẩm không còn bán (trạng thái: ' + (product.status || '') + ')',
+                code: 'PRODUCT_UNAVAILABLE'
+            });
         }
 
         const qty = parseInt(quantity, 10) || 0;
-        if (qty < 1) return res.status(400).json({ message: 'Số lượng phải lớn hơn 0' });
-        if ((product.quantity || 0) < qty) {
-            return res.status(400).json({ message: 'Số lượng sản phẩm không đủ (còn ' + (product.quantity || 0) + ' kg)' });
+        if (qty < 1) return res.status(400).json({ message: 'Số lượng phải lớn hơn 0', code: 'INVALID_QUANTITY' });
+        const stock = parseInt(product.quantity, 10) || 0;
+        if (stock < qty) {
+            return res.status(400).json({
+                message: 'Số lượng sản phẩm không đủ (còn ' + stock + ' kg)',
+                code: 'INSUFFICIENT_STOCK'
+            });
         }
 
-        const totalPrice = Number(product.price) * qty;
-        if (isNaN(totalPrice) || totalPrice <= 0) {
-            return res.status(400).json({ message: 'Giá sản phẩm không hợp lệ' });
+        const priceVal = parseFloat(String(product.price)) || 0;
+        const totalPrice = priceVal * qty;
+        if (totalPrice <= 0) {
+            return res.status(400).json({ message: 'Giá sản phẩm không hợp lệ', code: 'INVALID_PRICE' });
         }
 
-        // Tạo đơn hàng
         const newOrder = await Order.create({
             retailerId,
             productId,
             quantity: qty,
-            totalPrice: totalPrice,
+            totalPrice,
             contractTerms: contractTerms || 'Mua qua sàn nông sản sạch - BICAP',
             status: 'pending'
         });
 
-        // Trừ số lượng sản phẩm
-        product.quantity -= qty;
+        product.quantity = stock - qty;
         if (product.quantity === 0) product.status = 'distributed';
         await product.save();
 
-        // Notification (không block nếu lỗi)
         try {
             const { createNotificationInternal } = require('./notificationController');
             const farm = await Farm.findByPk(product.farmId);
@@ -85,7 +116,7 @@ exports.createOrder = async (req, res) => {
             console.warn('Notification skipped:', notifErr.message);
         }
 
-        res.status(201).json({
+        return res.status(201).json({
             message: 'Đặt hàng thành công!',
             order: {
                 id: newOrder.id,
@@ -96,14 +127,15 @@ exports.createOrder = async (req, res) => {
                 createdAt: newOrder.createdAt
             }
         });
-
     } catch (error) {
         console.error('[createOrder] Error:', error);
         console.error('[createOrder] Stack:', error.stack);
-        res.status(500).json({ 
-            message: 'Lỗi tạo đơn hàng', 
-            error: error.message,
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        const msg = error.message || 'Lỗi tạo đơn hàng';
+        const isSequelize = error.name && (error.name.includes('Sequelize') || error.name.includes('UniqueConstraint'));
+        return res.status(500).json({
+            message: isSequelize ? 'Lỗi dữ liệu. Vui lòng đăng xuất, đăng nhập lại rồi thử.' : 'Lỗi tạo đơn hàng.',
+            error: msg,
+            code: 'ORDER_CREATE_FAILED'
         });
     }
 };
