@@ -94,26 +94,32 @@ export default function RetailerProductDetailPage() {
         contractTerms: 'Mua qua sàn nông sản sạch - BICAP',
       };
       console.log('[Order] Sending:', payload);
+      const url = `${API_BASE}/orders`;
       const res = await axios.post(
-        `${API_BASE}/orders`,
+        url,
         payload,
-        { headers: { Authorization: `Bearer ${token}` }, timeout: 15000, validateStatus: () => true }
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 20000, validateStatus: () => true }
       );
       console.log('[Order] Response:', res.status, res.data);
       if (res.status === 201 || res.status === 200) {
         setMessage({ type: 'success', text: 'Gửi yêu cầu đặt hàng thành công! Đang chuyển...' });
         setTimeout(() => router.push('/retailer/orders'), 800);
-      } else {
-        const msg = res.data?.message || res.data?.error || `Đặt hàng thất bại (${res.status}). Vui lòng thử lại.`;
-        setMessage({ type: 'error', text: msg + (res.data?.details ? '\n' + res.data.details : '') });
-        if (res.data?.needsSeed || msg.includes('không tồn tại')) {
-          setTimeout(() => router.push('/retailer/market'), 2000);
-        }
+        return;
+      }
+      const data = res.data || {};
+      let text = data.message || data.error || `Đặt hàng thất bại (${res.status}). Vui lòng thử lại.`;
+      if (data.error && data.message !== data.error) text += '\n' + data.error;
+      if (data.code === 'USER_SYNC' || text.includes('đăng xuất')) text += '\n\nGợi ý: Đăng xuất rồi đăng nhập lại, sau đó thử đặt hàng.';
+      setMessage({ type: 'error', text });
+      if (data.needsSeed || text.includes('không tồn tại')) {
+        setTimeout(() => router.push('/retailer/market'), 2500);
       }
     } catch (err: any) {
       console.error('[Order] Error:', err);
-      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Lỗi kết nối. Kiểm tra backend và database.';
-      setMessage({ type: 'error', text: msg + (err.response?.data?.details ? '\n' + err.response.data.details : '') });
+      const data = err.response?.data;
+      const msg = data?.message || data?.error || err.message || 'Lỗi kết nối. Kiểm tra backend đang chạy và CORS.';
+      const extra = (data?.message && data?.error && data.message !== data.error) ? `\n${data.error}` : '';
+      setMessage({ type: 'error', text: msg + extra });
     } finally {
       setBuying(false);
     }

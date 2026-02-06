@@ -97,6 +97,10 @@ export default function RetailerMarketPage() {
   }, {});
 
   const handleBuyClick = (product: Product) => {
+    if (product.id == null || Number(product.id) < 1) return;
+    try {
+      sessionStorage.setItem('bicap_selected_product', JSON.stringify({ id: product.id, name: product.name, price: product.price, quantity: product.quantity, farm: product.farm }));
+    } catch (_) {}
     router.push(`/retailer/market/${product.id}`);
   };
 

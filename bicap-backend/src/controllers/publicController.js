@@ -696,6 +696,7 @@ exports.getPublicProducts = async (req, res) => {
 
         const { count, rows: products } = await Product.findAndCountAll({
             where: whereClause,
+            attributes: ['id', 'name', 'price', 'quantity', 'batchCode', 'status', 'farmId', 'createdAt'],
             include: [
                 { model: Farm, as: 'farm', attributes: ['id', 'name', 'address', 'certification'], required: false },
                 { model: FarmingSeason, as: 'season', attributes: ['id', 'name', 'startDate', 'endDate'], required: false }
@@ -723,41 +724,30 @@ exports.getPublicProducts = async (req, res) => {
 };
 
 /**
- * Lấy thông tin sản phẩm công khai
+ * Lấy thông tin sản phẩm công khai - dùng findByPk + include required:false để tránh lỗi JOIN
  */
 exports.getPublicProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const productId = parseInt(id, 10);
-        if (isNaN(productId)) return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+        if (isNaN(productId) || productId < 1) return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
 
-        const product = await Product.findOne({
-            where: { id: productId, status: 'available' },
+        const product = await Product.findByPk(productId, {
             include: [
-                {
-                    model: Farm,
-                    as: 'farm',
-                    attributes: ['id', 'name', 'address', 'certification', 'description']
-                },
-                {
-                    model: FarmingSeason,
-                    as: 'season',
-                    attributes: ['id', 'name', 'startDate', 'endDate', 'status']
-                }
+                { model: Farm, as: 'farm', attributes: ['id', 'name', 'address', 'certification', 'description'], required: false },
+                { model: FarmingSeason, as: 'season', attributes: ['id', 'name', 'startDate', 'endDate', 'status'], required: false }
             ]
         });
 
-        if (!product) {
-            return res.status(404).json({ message: 'Sản phẩm không tồn tại hoặc không còn bán' });
-        }
+        if (!product) return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+        if (product.status !== 'available') return res.status(404).json({ message: 'Sản phẩm không còn bán (trạng thái: ' + product.status + ')' });
 
-        res.json({ product });
+        res.json({ product: product.toJSON ? product.toJSON() : product });
 
     } catch (error) {
         console.warn('getPublicProduct error:', error && error.message);
-        // Không trả về sample product - tránh user đặt hàng với ID không tồn tại trong DB
         res.status(404).json({
-            message: 'Sản phẩm không tồn tại. Vui lòng bấm "Tạo sản phẩm mẫu" trên trang Sàn.',
+            message: 'Sản phẩm không tồn tại. Bấm "Tạo sản phẩm mẫu" trên trang Sàn rồi thử lại.',
             needsSeed: true
         });
     }
