@@ -41,6 +41,8 @@ export default function RetailerProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [buyQuantity, setBuyQuantity] = useState<number>(1);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [pickupAddress, setPickupAddress] = useState('');
   const [buying, setBuying] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -51,7 +53,7 @@ export default function RetailerProductDetailPage() {
     }
     const idNum = Number(id);
     axios
-      .get<{ product: Product }>(`${API_BASE}/public/products/${id}`, { validateStatus: () => true })
+      .get<{ product: Product; isSample?: boolean }>(`${API_BASE}/public/products/${id}`, { validateStatus: () => true })
       .then((res) => {
         if (res.status === 200 && res.data?.product) {
           setProduct({ ...res.data.product, isSample: !!res.data.isSample });
@@ -92,6 +94,8 @@ export default function RetailerProductDetailPage() {
         productId: Number(product.id),
         quantity: Math.max(1, Number(buyQuantity) || 1),
         contractTerms: 'Mua qua sàn nông sản sạch - BICAP',
+        deliveryAddress: deliveryAddress?.trim() || undefined,
+        pickupAddress: pickupAddress?.trim() || undefined,
       };
       console.log('[Order] Sending:', payload);
       const url = `${API_BASE}/orders`;
@@ -190,6 +194,31 @@ export default function RetailerProductDetailPage() {
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Địa chỉ giao hàng (điểm đến) <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
+                  rows={2}
+                  className="w-full border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 dark:bg-gray-700 dark:text-white"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Địa chỉ lấy hàng (tùy chọn – mặc định từ trang trại)
+                </label>
+                <input
+                  type="text"
+                  value={pickupAddress}
+                  onChange={(e) => setPickupAddress(e.target.value)}
+                  placeholder={product.farm?.address || 'Để trống sẽ dùng địa chỉ trang trại'}
+                  className="w-full border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Số lượng đặt mua (kg)
                 </label>
                 <input
@@ -223,7 +252,7 @@ export default function RetailerProductDetailPage() {
                 <button
                   type="button"
                   onClick={() => handleBuy()}
-                  disabled={buying || product.isSample || (Number(product.quantity) || 0) < 1 || (Number(buyQuantity) || 0) < 1}
+                  disabled={buying || product.isSample || !deliveryAddress?.trim() || (Number(product.quantity) || 0) < 1 || (Number(buyQuantity) || 0) < 1}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {buying ? 'Đang xử lý...' : product.isSample ? 'Không thể đặt (sản phẩm mẫu)' : 'Gửi Yêu Cầu Đặt Hàng'}
