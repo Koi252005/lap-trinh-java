@@ -135,20 +135,13 @@ export default function RetailerOrderDetail() {
 
             const token = await auth.currentUser?.getIdToken();
             if (!token) {
-
                 alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
                 setActionLoading(false);
                 return;
             }
 
-            const response = await axios.put(`http://localhost:5001/api/orders/${order?.id}/confirm-delivery`, {
-
-                alert('Vui lòng đăng nhập lại');
-                setActionLoading(false);
-                return;
-            }
-            await axios.put(`${API_BASE}/orders/${order?.id}/confirm-delivery`, {
-
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+            const response = await axios.put(`${API_BASE}/orders/${order?.id}/confirm-delivery`, {
                 deliveryImage: imageUrl
             }, {
                 headers: { Authorization: `Bearer ${token}` }
