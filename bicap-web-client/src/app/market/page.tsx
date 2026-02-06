@@ -300,8 +300,18 @@ export default function MarketplacePage() {
 
             alert('Đặt hàng thành công! Chủ trại sẽ liên hệ với bạn.');
             setShowModal(false);
-            const res = await axios.get(`${API_BASE}/products`);
-            setProducts(res.data);
+            // Refresh danh sách sản phẩm
+            try {
+                const res = await axios.get(`${API_BASE}/public/products`);
+                if (res.data && res.data.products && res.data.products.length > 0) {
+                    setProducts(res.data.products);
+                } else if (Array.isArray(res.data) && res.data.length > 0) {
+                    setProducts(res.data);
+                }
+            } catch (refreshError) {
+                // Nếu refresh lỗi, giữ nguyên danh sách hiện tại
+                console.warn('Không thể refresh danh sách sản phẩm:', refreshError);
+            }
 
         } catch (error: any) {
             console.error(error);
