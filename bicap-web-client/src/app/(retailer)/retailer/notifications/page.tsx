@@ -24,6 +24,11 @@ export default function RetailerNotifications() {
     }, [user]);
 
     const fetchNotifications = async () => {
+        if (!auth) {
+            console.error('Firebase auth not initialized');
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const token = await auth.currentUser?.getIdToken();
@@ -39,8 +44,16 @@ export default function RetailerNotifications() {
     };
 
     const markAsRead = async (id: number) => {
+        if (!auth) {
+            console.error('Firebase auth not initialized');
+            return;
+        }
         try {
             const token = await auth.currentUser?.getIdToken();
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                return;
+            }
             await axios.put(`http://localhost:5001/api/notifications/${id}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });

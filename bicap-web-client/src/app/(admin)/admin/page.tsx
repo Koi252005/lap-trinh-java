@@ -20,6 +20,7 @@ interface DashboardData {
   };
   usersByRole: Record<string, number>;
   ordersByStatus: Record<string, number>;
+  monthlyRevenue?: Array<{ month: string; total: number }>;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -37,10 +38,27 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [seeding, setSeeding] = useState(false);
 
   useEffect(() => {
     const fetchDashboard = async () => {
+      const defaultData: DashboardData = {
+        overview: {
+          totalUsers: 0,
+          totalFarms: 0,
+          totalOrders: 0,
+          totalProducts: 0,
+          activeSubscriptions: 0,
+          totalRevenue: 0,
+          pendingReports: 0,
+          activeShipments: 0,
+        },
+        usersByRole: {},
+        ordersByStatus: {},
+      };
+
       if (!auth?.currentUser) {
+        setData(defaultData);
         setLoading(false);
         return;
       }
@@ -53,46 +71,34 @@ export default function AdminDashboardPage() {
         if (res.status === 200) {
           setData(res.data);
         } else {
-          // Nếu API lỗi, dùng dữ liệu mặc định (0) thay vì hiển thị lỗi
-          setData({
-            overview: {
-              totalUsers: 0,
-              totalFarms: 0,
-              totalOrders: 0,
-              totalProducts: 0,
-              activeSubscriptions: 0,
-              totalRevenue: 0,
-              pendingReports: 0,
-              activeShipments: 0,
-            },
-            usersByRole: {},
-            ordersByStatus: {},
-            monthlyRevenue: [],
-          });
+          setData(defaultData);
         }
       } catch (e) {
-        // Dùng dữ liệu mặc định khi lỗi kết nối
-        setData({
-          overview: {
-            totalUsers: 0,
-            totalFarms: 0,
-            totalOrders: 0,
-            totalProducts: 0,
-            activeSubscriptions: 0,
-            totalRevenue: 0,
-            pendingReports: 0,
-            activeShipments: 0,
-          },
-          usersByRole: {},
-          ordersByStatus: {},
-          monthlyRevenue: [],
-        });
+        setData(defaultData);
       } finally {
         setLoading(false);
       }
     };
     fetchDashboard();
   }, []);
+
+  const handleSeed = async () => {
+    if (!confirm('Tạo sản phẩm mẫu vào database? (User, Farm, Products)')) return;
+    setSeeding(true);
+    try {
+      const res = await axios.post(`${API_BASE}/seed`, {}, { validateStatus: () => true });
+      if (res.status === 200) {
+        alert(`Seed thành công! Đã tạo ${res.data?.created || 0} sản phẩm mới. Tổng: ${res.data?.totalAvailable || 0} sản phẩm.`);
+        window.location.reload();
+      } else {
+        alert(res.data?.message || res.data?.error || 'Lỗi seed');
+      }
+    } catch (e: any) {
+      alert(e.response?.data?.error || e.message || 'Lỗi kết nối');
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -178,7 +184,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Link
           href="/admin/orders"
           className="inline-flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-green-700"
@@ -191,6 +197,13 @@ export default function AdminDashboardPage() {
         >
           Quản lý người dùng
         </Link>
+        <button
+          onClick={handleSeed}
+          disabled={seeding}
+          className="inline-flex items-center gap-2 bg-amber-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-amber-700 disabled:opacity-50"
+        >
+          {seeding ? 'Đang tạo...' : '🌱 Seed sản phẩm mẫu'}
+        </button>
       </div>
     </div>
   );

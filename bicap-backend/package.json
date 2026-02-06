@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "seed": "node scripts/addSampleProducts.js",
+    "seed:local": "node scripts/addSampleProducts.js --local",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

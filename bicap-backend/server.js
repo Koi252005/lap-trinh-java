@@ -50,10 +50,21 @@ const startServer = async () => {
   // Kết nối Database trong background (không block server)
   try {
     await connectDB();
-    // Nếu kết nối thành công, đồng bộ bảng
     try {
       await initModels();
       console.log('✅ Database models initialized');
+      // Tự động seed sản phẩm nếu chưa có (Docker / lần chạy đầu)
+      try {
+        const { Product } = require('./src/models');
+        const count = await Product.count({ where: { status: 'available' } }).catch(() => 0);
+        if (count === 0) {
+          const { runSeed } = require('./src/utils/seedProducts');
+          await runSeed();
+          console.log('🌱 Đã tự động tạo sản phẩm mẫu (seed) - có thể tạo đơn hàng ngay');
+        }
+      } catch (seedErr) {
+        console.warn('⚠️  Auto-seed skipped:', seedErr.message);
+      }
     } catch (modelError) {
       console.warn('⚠️  Model initialization failed:', modelError.message);
     }
@@ -84,6 +95,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/seed', require('./src/routes/seedRoutes'));
 app.use('/api/notifications', require('./src/routes/notificationRoutes'));
 app.use('/api/tasks', require('./src/routes/seasonTaskRoutes'));
 

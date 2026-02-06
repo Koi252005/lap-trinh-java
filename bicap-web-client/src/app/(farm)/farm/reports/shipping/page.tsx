@@ -53,6 +53,11 @@ export default function ShippingReportPage() {
     useEffect(() => {
         if (!user) return;
         const fetchFarms = async () => {
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                setLoading(false);
+                return;
+            }
             try {
                 const token = await auth.currentUser?.getIdToken();
                 const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
@@ -77,6 +82,11 @@ export default function ShippingReportPage() {
         if (!selectedFarmId) return;
 
         const fetchShipments = async () => {
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                setLoading(false);
+                return;
+            }
             setLoading(true);
             try {
                 const token = await auth.currentUser?.getIdToken();

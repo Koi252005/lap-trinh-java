@@ -7,22 +7,23 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { auth, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { API_BASE } from '@/lib/api';
 
 interface OrderDetail {
-    id: number;
-    productId: number;
+    id: number | string;
+    productId?: number;
     product: {
         name: string;
-        price: number;
+        price?: number;
         farm: {
             name: string;
-            address: string;
-            ownerId: number;
+            address?: string;
+            ownerId?: number;
         };
     };
     quantity: number;
     totalPrice: number;
-    depositAmount: number;
+    depositAmount?: number;
     status: string;
     createdAt: string;
     contractTerms?: string;
@@ -44,17 +45,23 @@ export default function RetailerOrderDetail() {
     const [msgContent, setMsgContent] = useState('');
 
     useEffect(() => {
-        if (!user || !id) return;
+        if (!id || !user || !auth?.currentUser) {
+            setLoading(false);
+            return;
+        }
         const fetchOrder = async () => {
             try {
                 const token = await auth.currentUser?.getIdToken();
-                const res = await axios.get('http://localhost:5001/api/orders/my-orders', {
-                    headers: { Authorization: `Bearer ${token}` }
+                const res = await axios.get(`${API_BASE}/orders/my-orders`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    validateStatus: () => true,
                 });
-                const found = res.data.orders.find((o: any) => o.id === Number(id));
-                setOrder(found || null);
-            } catch (error) {
-                console.error(error);
+                if (res.status === 200 && res.data && Array.isArray(res.data.orders)) {
+                    const found = res.data.orders.find((o: any) => o.id === Number(id) || String(o.id) === String(id));
+                    if (found) setOrder(found);
+                }
+            } catch (_) {
+                setOrder(null);
             } finally {
                 setLoading(false);
             }
@@ -64,10 +71,19 @@ export default function RetailerOrderDetail() {
 
     const handleCancel = async () => {
         if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return;
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         setActionLoading(true);
         try {
             const token = await auth.currentUser?.getIdToken();
-            await axios.put(`http://localhost:5001/api/orders/${order?.id}/cancel`, {}, {
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                setActionLoading(false);
+                return;
+            }
+            await axios.put(`${API_BASE}/orders/${order?.id}/cancel`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Đã hủy đơn hàng thành công!');
@@ -84,6 +100,10 @@ export default function RetailerOrderDetail() {
         if (!confirm('Xác nhận đã nhận đủ hàng?')) return;
         if (!deliveryImage) {
             alert('Vui lòng tải lên ảnh bằng chứng nhận hàng.');
+            return;
+        }
+        if (!auth || !storage) {
+            alert('Firebase chưa được cấu hình');
             return;
         }
 
@@ -107,7 +127,12 @@ export default function RetailerOrderDetail() {
             }
 
             const token = await auth.currentUser?.getIdToken();
-            await axios.put(`http://localhost:5001/api/orders/${order?.id}/confirm-delivery`, {
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                setActionLoading(false);
+                return;
+            }
+            await axios.put(`${API_BASE}/orders/${order?.id}/confirm-delivery`, {
                 deliveryImage: imageUrl
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -124,9 +149,17 @@ export default function RetailerOrderDetail() {
 
     const handlePayDeposit = async () => {
         if (!confirm('Xác nhận thanh toán tiền cọc?')) return;
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         try {
             const token = await auth.currentUser?.getIdToken();
-            await axios.put(`http://localhost:5001/api/orders/${order?.id}/pay-deposit`, {}, {
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                return;
+            }
+            await axios.put(`${API_BASE}/orders/${order?.id}/pay-deposit`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Thanh toán tiền cọc thành công!');
@@ -139,9 +172,17 @@ export default function RetailerOrderDetail() {
 
     const handlePayRemaining = async () => {
         if (!confirm('Xác nhận thanh toán phần còn lại để hoàn tất đơn hàng?')) return;
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         try {
             const token = await auth.currentUser?.getIdToken();
-            await axios.put(`http://localhost:5001/api/orders/${order?.id}/pay-remaining`, {}, {
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                return;
+            }
+            await axios.put(`${API_BASE}/orders/${order?.id}/pay-remaining`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Thanh toán hoàn tất! Đơn hàng đã đóng.');
@@ -162,11 +203,20 @@ export default function RetailerOrderDetail() {
             alert('Vui lòng nhập nội dung tin nhắn');
             return;
         }
+        if (!auth) {
+            alert('Firebase chưa được cấu hình');
+            return;
+        }
         setActionLoading(true);
         try {
             const token = await auth.currentUser?.getIdToken();
-            await axios.post('http://localhost:5001/api/notifications/send', {
-                receiverId: order?.product.farm.ownerId,
+            if (!token) {
+                alert('Vui lòng đăng nhập lại');
+                setActionLoading(false);
+                return;
+            }
+            await axios.post(`${API_BASE}/notifications/send`, {
+                receiverId: order?.product?.farm?.ownerId,
                 title: `Tin nhắn từ Nhà bán lẻ (ĐH #${order?.id})`,
                 message: msgContent,
                 type: 'message'
@@ -228,7 +278,7 @@ export default function RetailerOrderDetail() {
                         <Link href="/retailer/orders" className="text-gray-500 hover:text-gray-700 flex items-center mb-2">
                             ← Quay lại danh sách
                         </Link>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             Đơn hàng #{order.id}
                         </h1>
                         <p className="text-gray-500 text-sm mt-1">
@@ -255,11 +305,11 @@ export default function RetailerOrderDetail() {
                                         {order.product.name}
                                     </h2>
                                     <p className="text-green-600 font-semibold mb-2">
-                                        {order.product.price.toLocaleString()} đ / kg
+                                        {(order.product.price ?? 0).toLocaleString('vi-VN')} đ / kg
                                     </p>
                                     <div className="text-sm text-gray-500">
-                                        <p>🏠 Trang trại: <span className="font-medium text-gray-700 dark:text-gray-300">{order.product.farm.name}</span></p>
-                                        <p>📍 Địa chỉ: {order.product.farm.address}</p>
+                                        <p>🏠 Trang trại: <span className="font-medium text-gray-700 dark:text-gray-300">{order.product.farm?.name ?? '—'}</span></p>
+                                        <p>📍 Địa chỉ: {order.product.farm?.address ?? '—'}</p>
                                     </div>
                                 </div>
                             </div>

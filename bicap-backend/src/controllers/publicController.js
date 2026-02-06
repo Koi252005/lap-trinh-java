@@ -647,15 +647,46 @@ const sampleProducts = [
 ];
 
 /**
- * Lấy danh sách sản phẩm công khai (Marketplace)
+ * Trả về response sản phẩm mẫu (dùng khi DB lỗi hoặc bất kỳ lỗi nào) - không bao giờ throw
+ */
+function sendSampleProductsResponse(res, req) {
+    try {
+        const q = req && req.query || {};
+        const page = Math.max(1, parseInt(q.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(q.limit, 10) || 20));
+        const search = typeof q.search === 'string' ? q.search.trim() : '';
+        let list = sampleProducts;
+        if (search) {
+            const term = search.toLowerCase();
+            list = sampleProducts.filter(p =>
+                (p.name && p.name.toLowerCase().includes(term)) ||
+                (p.farm && p.farm.name && p.farm.name.toLowerCase().includes(term))
+            );
+        }
+        const total = list.length;
+        const start = (page - 1) * limit;
+        const products = list.slice(start, start + limit);
+        res.status(200).json({
+            products,
+            pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+            warning: 'Đang hiển thị sản phẩm mẫu.'
+        });
+    } catch (e) {
+        res.status(200).json({ products: sampleProducts.slice(0, 20), pagination: { total: sampleProducts.length, page: 1, limit: 20, totalPages: 1 } });
+    }
+}
+
+/**
+ * Lấy danh sách sản phẩm công khai (Marketplace) - không bao giờ trả 500
  */
 exports.getPublicProducts = async (req, res) => {
     try {
-        const { search, page = 1, limit = 20 } = req.query;
-        const offset = (parseInt(page) - 1) * parseInt(limit);
+        const { search, page = 1, limit = 20 } = req.query || {};
+        const pageNum = Math.max(1, parseInt(page, 10) || 1);
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+        const offset = (pageNum - 1) * limitNum;
 
         let whereClause = { status: 'available' };
-
         if (search) {
             whereClause[Op.or] = [
                 { name: { [Op.like]: `%${search}%` } },
@@ -666,85 +697,27 @@ exports.getPublicProducts = async (req, res) => {
         const { count, rows: products } = await Product.findAndCountAll({
             where: whereClause,
             include: [
-                {
-                    model: Farm,
-                    as: 'farm',
-                    attributes: ['id', 'name', 'address', 'certification'],
-                    required: false // LEFT JOIN - không fail nếu không có farm
-                },
-                {
-                    model: FarmingSeason,
-                    as: 'season',
-                    attributes: ['id', 'name', 'startDate', 'endDate'],
-                    required: false // LEFT JOIN - không fail nếu không có season
-                }
+                { model: Farm, as: 'farm', attributes: ['id', 'name', 'address', 'certification'], required: false },
+                { model: FarmingSeason, as: 'season', attributes: ['id', 'name', 'startDate', 'endDate'], required: false }
             ],
-            limit: parseInt(limit),
-            offset: offset,
+            limit: limitNum,
+            offset,
             order: [['createdAt', 'DESC']],
             subQuery: false
         });
 
-        res.json({
+        return res.status(200).json({
             products,
-            pagination: {
-                total: count,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                totalPages: Math.ceil(count / parseInt(limit))
-            }
+            pagination: { total: count, page: pageNum, limit: limitNum, totalPages: Math.ceil(count / limitNum) }
         });
-
     } catch (error) {
-        console.error('Error getting public products:', error);
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        
-        // If database error OR any error, return sample products (graceful degradation)
-        const isDatabaseError = error.name === 'SequelizeConnectionError' || 
-                                error.name === 'SequelizeHostNotFoundError' ||
-                                error.name === 'SequelizeDatabaseError' ||
-                                error.name === 'SequelizeEagerLoadingError' ||
-                                error.name === 'SequelizeValidationError' ||
-                                error.message?.includes('ECONNREFUSED') ||
-                                error.message?.includes('getaddrinfo ENOTFOUND') ||
-                                error.message?.includes('Connection lost') ||
-                                error.message?.includes('Unable to connect') ||
-                                error.message?.includes('include') ||
-                                error.message?.includes('association');
-        
-        // Always return sample products on any error (graceful degradation)
-        console.warn('Returning sample products due to error:', error.name || 'Unknown');
-        const { search, page = 1, limit = 20 } = req.query;
-        const offset = (parseInt(page) - 1) * parseInt(limit);
-        
-        let filteredProducts = sampleProducts;
-        
-        // Apply search filter if provided
-        if (search) {
-            const searchTerm = search.toLowerCase();
-            filteredProducts = sampleProducts.filter(p => 
-                p.name.toLowerCase().includes(searchTerm) ||
-                (p.farm && p.farm.name && p.farm.name.toLowerCase().includes(searchTerm))
-            );
-        }
-        
-        // Apply pagination
-        const start = offset;
-        const end = start + parseInt(limit);
-        const paginatedProducts = filteredProducts.slice(start, end);
-        
-        // Return 200 with sample products instead of 500 error
-        return res.json({
-            products: paginatedProducts,
-            pagination: {
-                total: filteredProducts.length,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                totalPages: Math.ceil(filteredProducts.length / parseInt(limit))
-            },
-            warning: 'Database chưa kết nối hoặc có lỗi. Đang hiển thị sản phẩm mẫu.'
+        console.warn('getPublicProducts error:', error && error.message);
+        // KHÔNG trả về sample products - ID không có trong DB sẽ gây lỗi "sản phẩm không tồn tại" khi đặt hàng
+        return res.status(200).json({
+            products: [],
+            pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
+            needsSeed: true,
+            message: 'Chưa có sản phẩm. Bấm "Tạo sản phẩm mẫu" hoặc kiểm tra kết nối database.'
         });
     }
 };
@@ -755,9 +728,11 @@ exports.getPublicProducts = async (req, res) => {
 exports.getPublicProduct = async (req, res) => {
     try {
         const { id } = req.params;
+        const productId = parseInt(id, 10);
+        if (isNaN(productId)) return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
 
-        const product = await Product.findByPk(id, {
-            where: { status: 'available' },
+        const product = await Product.findOne({
+            where: { id: productId, status: 'available' },
             include: [
                 {
                     model: Farm,
@@ -779,8 +754,12 @@ exports.getPublicProduct = async (req, res) => {
         res.json({ product });
 
     } catch (error) {
-        console.error('Error getting public product:', error);
-        res.status(500).json({ message: 'Lỗi lấy thông tin sản phẩm', error: error.message });
+        console.warn('getPublicProduct error:', error && error.message);
+        // Không trả về sample product - tránh user đặt hàng với ID không tồn tại trong DB
+        res.status(404).json({
+            message: 'Sản phẩm không tồn tại. Vui lòng bấm "Tạo sản phẩm mẫu" trên trang Sàn.',
+            needsSeed: true
+        });
     }
 };
 

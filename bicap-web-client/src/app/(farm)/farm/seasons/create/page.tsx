@@ -36,6 +36,11 @@ function CreateSeasonContent() {
             return;
         }
 
+        if (!auth) {
+            setError('Firebase chưa được cấu hình');
+            setSaving(false);
+            return;
+        }
         try {
             const token = await auth.currentUser?.getIdToken();
             if (!token) throw new Error("Vui lòng đăng nhập");

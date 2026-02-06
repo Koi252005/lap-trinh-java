@@ -42,6 +42,11 @@ export default function SeasonListPage() {
     }, [selectedFarmId]);
 
     const fetchFarms = async () => {
+        if (!auth) {
+            console.error('Firebase auth not initialized');
+            setLoading(false);
+            return;
+        }
         try {
             const token = await auth.currentUser?.getIdToken();
             const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
@@ -62,6 +67,11 @@ export default function SeasonListPage() {
     };
 
     const fetchSeasons = async (farmId: number) => {
+        if (!auth) {
+            console.error('Firebase auth not initialized');
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             // Public endpoint for reading seasons (or private, both work with token)

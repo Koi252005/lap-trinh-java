@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
@@ -22,6 +22,7 @@ export default function FarmMonitoringPage() {
     const [currentData, setCurrentData] = useState<EnvData | null>(null);
     const [history, setHistory] = useState<EnvData[]>([]);
     const [loading, setLoading] = useState(true);
+    const defaultTimestamp = useMemo(() => Date.now(), []);
 
     // Farm Selection
     const [farms, setFarms] = useState<Farm[]>([]);
@@ -31,8 +32,13 @@ export default function FarmMonitoringPage() {
     useEffect(() => {
         if (!user) return;
         const fetchFarms = async () => {
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                setLoading(false);
+                return;
+            }
             try {
-                const token = await auth?.currentUser?.getIdToken();
+                const token = await auth.currentUser?.getIdToken();
                 const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -55,8 +61,13 @@ export default function FarmMonitoringPage() {
         if (!selectedFarmId) return;
 
         const fetchData = async () => {
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                setLoading(false);
+                return;
+            }
             try {
-                const token = await auth?.currentUser?.getIdToken();
+                const token = await auth.currentUser?.getIdToken();
                 const resCurrent = await axios.get(`http://localhost:5001/api/monitoring/current/${selectedFarmId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -197,7 +208,7 @@ export default function FarmMonitoringPage() {
                             </div>
                             <div className="mt-4 text-sm text-gray-400 flex items-center gap-1">
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                Cập nhật: {new Date(currentData?.timestamp || Date.now()).toLocaleTimeString()}
+                                Cập nhật: {currentData?.timestamp ? new Date(currentData.timestamp).toLocaleTimeString() : 'Chưa có dữ liệu'}
                             </div>
                         </div>
 

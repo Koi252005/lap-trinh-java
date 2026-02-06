@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
+import { API_BASE } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface Order {
@@ -55,7 +56,7 @@ export default function FarmOrderManager() {
     const fetchFarms = async () => {
         try {
             const token = await auth?.currentUser?.getIdToken();
-            const res = await axios.get('http://localhost:5001/api/farms/my-farms', {
+            const res = await axios.get(`${API_BASE}/farms/my-farms`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.farms?.length > 0) {
@@ -74,7 +75,7 @@ export default function FarmOrderManager() {
         setLoading(true);
         try {
             const token = await auth?.currentUser?.getIdToken();
-            const res = await axios.get(`http://localhost:5001/api/orders/farm/${farmId}`, {
+            const res = await axios.get(`${API_BASE}/orders/farm/${farmId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setOrders(res.data.orders);
@@ -93,7 +94,7 @@ export default function FarmOrderManager() {
 
         try {
             const token = await auth?.currentUser?.getIdToken();
-            await axios.put(`http://localhost:5001/api/orders/${orderId}/status`, { status: newStatus }, {
+            await axios.put(`${API_BASE}/orders/${orderId}/status`, { status: newStatus }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Cập nhật thành công!');
@@ -110,7 +111,7 @@ export default function FarmOrderManager() {
         try {
             const token = await auth?.currentUser?.getIdToken();
             // Call API with minimal data (just orderId)
-            await axios.post('http://localhost:5001/api/shipments', {
+            await axios.post(`${API_BASE}/shipments`, {
                 orderId: orderId,
                 pickupTime: new Date() // Hint to backend "Pickup now/soon"
             }, {
@@ -131,7 +132,10 @@ export default function FarmOrderManager() {
     return (
         <div className="max-w-6xl mx-auto p-4">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Quản Lý Đơn Hàng</h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Quản Lý Đơn Hàng</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Chủ trại xác nhận đơn tại đây: bấm &quot;Duyệt&quot; để xác nhận hoặc &quot;Hủy&quot; để từ chối.</p>
+                </div>
                 <Link href="/farm/shipments" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                     🚚 Xem Danh Sách Vận Chuyển
                 </Link>

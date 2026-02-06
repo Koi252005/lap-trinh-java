@@ -1,13 +1,17 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Khởi tạo kết nối Sequelize
+// Host: DB_SERVER (Docker: sql_server) hoặc DB_HOST hoặc localhost (chạy local)
+const dbHost = process.env.DB_SERVER || process.env.DB_HOST || 'localhost';
+// Docker-compose dùng DB_PASS, thường thì dùng DB_PASSWORD
+const dbPassword = process.env.DB_PASSWORD || process.env.DB_PASS || '';
+
 const sequelize = new Sequelize(
-  process.env.DB_NAME,      // Tên DB: BICAP
-  process.env.DB_USER,      // User: sa
-  process.env.DB_PASSWORD,  // ✅ ĐÃ SỬA: Dùng đúng tên DB_PASSWORD trong .env
+  process.env.DB_NAME || 'BICAP',
+  process.env.DB_USER || 'sa',
+  dbPassword,
   {
-    host: process.env.DB_SERVER || 'localhost', // ✅ ĐÃ SỬA: Dùng đúng tên DB_SERVER trong .env
+    host: dbHost,
     port: 1433,
     dialect: 'mssql',
     logging: false,
