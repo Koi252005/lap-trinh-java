@@ -14,6 +14,7 @@ router.get('/dashboard', adminAuth, adminController.getDashboard);
 router.get('/users', adminAuth, adminController.getUsers);
 router.get('/users/:id', adminAuth, adminController.getUserById);
 router.put('/users/:id', adminAuth, adminController.updateUser);
+router.put('/users/email/:email', adminAuth, adminController.updateUserByEmail);
 router.delete('/users/:id', adminAuth, adminController.deleteUser);
 
 // Farm Management
