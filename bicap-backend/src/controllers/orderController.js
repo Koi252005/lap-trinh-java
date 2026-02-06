@@ -1,5 +1,5 @@
 // src/controllers/orderController.js
-const { Order, Product, Farm, User } = require('../models');
+const { Order, Product, Farm, User, Shipment } = require('../models');
 const { getFileUrl } = require('../middleware/uploadMiddleware');
 
 // Helper: lấy hoặc tạo user từ Firebase token
@@ -36,7 +36,7 @@ async function getOrCreateRetailerId(req) {
 // 1. Tạo đơn hàng (Retailer mua từ Marketplace)
 exports.createOrder = async (req, res) => {
     try {
-        const { productId: rawProductId, quantity, contractTerms } = req.body || {};
+        const { productId: rawProductId, quantity, contractTerms, deliveryAddress, pickupAddress } = req.body || {};
         const productId = parseInt(rawProductId, 10);
         if (rawProductId === undefined || rawProductId === null || isNaN(productId) || productId < 1) {
             return res.status(400).json({ message: 'Mã sản phẩm không hợp lệ', code: 'INVALID_PRODUCT_ID' });
@@ -94,7 +94,9 @@ exports.createOrder = async (req, res) => {
             quantity: qty,
             totalPrice,
             contractTerms: contractTerms || 'Mua qua sàn nông sản sạch - BICAP',
-            status: 'pending'
+            status: 'pending',
+            deliveryAddress: deliveryAddress || null,
+            pickupAddress: pickupAddress || null
         });
 
         product.quantity = stock - qty;
@@ -220,6 +222,28 @@ exports.updateOrderStatus = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Lỗi cập nhật đơn hàng' });
+    }
+};
+
+// 3b. Đơn hàng chờ giao (cho Shipping/Admin: confirmed, chưa có vận đơn)
+exports.getOrdersPendingShipment = async (req, res) => {
+    try {
+        const { Op } = require('sequelize');
+        const shippedOrderIds = (await Shipment.findAll({ attributes: ['orderId'], raw: true })).map(s => s.orderId);
+        const whereClause = { status: 'confirmed' };
+        if (shippedOrderIds.length > 0) whereClause.id = { [Op.notIn]: shippedOrderIds };
+        const orders = await Order.findAll({
+            where: whereClause,
+            include: [
+                { model: Product, as: 'product', attributes: ['name', 'price', 'batchCode', 'farmId'], include: [{ model: Farm, as: 'farm', attributes: ['name', 'address'] }] },
+                { model: User, as: 'retailer', attributes: ['fullName', 'phone', 'address'] }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        res.json({ orders });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Lỗi lấy đơn chờ giao' });
     }
 };
 

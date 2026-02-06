@@ -13,6 +13,8 @@ router.get('/my-orders', verifyToken, requireRole(['retailer']), orderController
 
 // Lấy danh sách đơn hàng của trang trại (Cho chủ trại)
 router.get('/farm/:farmId', verifyToken, requireRole(['farm', 'admin']), orderController.getOrdersByFarm);
+// Đơn hàng chờ giao (Cho Shipping/Admin - duyệt đơn giao)
+router.get('/pending-shipment', verifyToken, requireRole(['shipping', 'shipping_manager', 'admin']), orderController.getOrdersPendingShipment);
 
 // Cập nhật trạng thái đơn hàng (Cho chủ trại)
 router.put('/:id/status', verifyToken, requireRole(['farm', 'admin']), orderController.updateOrderStatus);
