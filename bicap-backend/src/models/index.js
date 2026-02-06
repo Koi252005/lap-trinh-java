@@ -157,6 +157,20 @@ const initModels = async () => {
         allowNull: true
       });
     }
+    if (!orderTableDesc.pickupAddress) {
+      console.log('⚡ Adding missing column: pickupAddress to Orders');
+      await queryInterface.addColumn('Orders', 'pickupAddress', {
+        type: require('sequelize').DataTypes.TEXT,
+        allowNull: true
+      });
+    }
+    if (!orderTableDesc.deliveryAddress) {
+      console.log('⚡ Adding missing column: deliveryAddress to Orders');
+      await queryInterface.addColumn('Orders', 'deliveryAddress', {
+        type: require('sequelize').DataTypes.TEXT,
+        allowNull: true
+      });
+    }
 
     // 5. Manual Migration for 'Reports' table
     const reportTableDesc = await queryInterface.describeTable('Reports');

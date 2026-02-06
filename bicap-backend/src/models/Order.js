@@ -44,6 +44,14 @@ const Order = sequelize.define('Order', {
     deliveryImage: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    pickupAddress: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    deliveryAddress: {
+        type: DataTypes.TEXT,
+        allowNull: true
     }
 }, {
     timestamps: true
