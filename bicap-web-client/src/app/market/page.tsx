@@ -25,20 +25,53 @@ interface Product {
     batchCode: string;
 }
 
-/** Sản phẩm mẫu hiển thị khi API lỗi hoặc chưa có dữ liệu */
+/** Sản phẩm mẫu từ các trang trại uy tín - Dùng để demo */
 const FALLBACK_PRODUCTS: Product[] = [
-    { id: 1, name: 'Rau Xà Lách Tươi', price: 25000, quantity: 50, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-LETTUCE-001' },
-    { id: 2, name: 'Cà Chua Bi Đỏ', price: 35000, quantity: 30, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-TOMATO-001' },
-    { id: 3, name: 'Dưa Chuột Sạch', price: 20000, quantity: 40, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Hà Nội', certification: 'VietGAP' }, season: { name: 'Vụ Xuân' }, batchCode: 'BATCH-CUCUMBER-001' },
-    { id: 4, name: 'Cà Rốt Tươi', price: 22000, quantity: 60, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-CARROT-001' },
-    { id: 5, name: 'Rau Muống', price: 15000, quantity: 45, farm: { name: 'Nông Trại Xanh Tươi', address: 'Đà Lạt', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-WATERSPINACH-001' },
-    { id: 6, name: 'Bắp Cải Xanh', price: 18000, quantity: 40, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-CABBAGE-001' },
-    { id: 7, name: 'Dâu Tây', price: 120000, quantity: 20, farm: { name: 'Nông Trại Xanh Tươi', address: 'Đà Lạt', certification: 'VietGAP' }, season: { name: 'Vụ Đông' }, batchCode: 'BATCH-STRAWBERRY-001' },
-    { id: 8, name: 'Cam Sành', price: 28000, quantity: 55, farm: { name: 'Vườn Cây Ăn Trái', address: 'Tiền Giang', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-ORANGE-001' },
-    { id: 9, name: 'Khoai Tây', price: 18000, quantity: 70, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-POTATO-001' },
-    { id: 10, name: 'Bí Đỏ', price: 15000, quantity: 25, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Hà Nội', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-PUMPKIN-001' },
-    { id: 11, name: 'Nấm Bào Ngư', price: 85000, quantity: 18, farm: { name: 'Trang Trại Nấm', address: 'Lâm Đồng', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-MUSHROOM-001' },
-    { id: 12, name: 'Ớt Chuông Đỏ', price: 45000, quantity: 25, farm: { name: 'Trang Trại Mẫu', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-BELLPEPPER-001' },
+    // === TRANG TRẠI XANH TƯƠI - Đà Lạt ===
+    { id: 1, name: 'Dâu Tây Đà Lạt', price: 120000, quantity: 30, farm: { name: 'Nông Trại Xanh Tươi', address: 'Đà Lạt, Lâm Đồng', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-STRAWBERRY-001' },
+    { id: 2, name: 'Rau Xà Lách Tươi', price: 25000, quantity: 50, farm: { name: 'Nông Trại Xanh Tươi', address: 'Đà Lạt, Lâm Đồng', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-LETTUCE-001' },
+    { id: 3, name: 'Cà Chua Cherry', price: 45000, quantity: 40, farm: { name: 'Nông Trại Xanh Tươi', address: 'Đà Lạt, Lâm Đồng', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-TOMATO-CHERRY-001' },
+    { id: 4, name: 'Bắp Cải Tím', price: 22000, quantity: 35, farm: { name: 'Nông Trại Xanh Tươi', address: 'Đà Lạt, Lâm Đồng', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-PURPLE-CABBAGE-001' },
+    
+    // === TRANG TRẠI HỮU CƠ CỦ CHI - TP.HCM ===
+    { id: 5, name: 'Cà Chua Bi Đỏ', price: 35000, quantity: 45, farm: { name: 'Trang Trại Hữu Cơ Củ Chi', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-TOMATO-001' },
+    { id: 6, name: 'Cà Rốt Tươi', price: 22000, quantity: 60, farm: { name: 'Trang Trại Hữu Cơ Củ Chi', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-CARROT-001' },
+    { id: 7, name: 'Khoai Tây', price: 18000, quantity: 70, farm: { name: 'Trang Trại Hữu Cơ Củ Chi', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-POTATO-001' },
+    { id: 8, name: 'Ớt Chuông Đỏ', price: 45000, quantity: 30, farm: { name: 'Trang Trại Hữu Cơ Củ Chi', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-BELLPEPPER-001' },
+    { id: 9, name: 'Rau Muống Sạch', price: 15000, quantity: 55, farm: { name: 'Trang Trại Hữu Cơ Củ Chi', address: 'Củ Chi, TP.HCM', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-WATERSPINACH-001' },
+    
+    // === VƯỜN RAU SẠCH GIA ĐÌNH - Hà Nội ===
+    { id: 10, name: 'Dưa Chuột Sạch', price: 20000, quantity: 50, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Ba Vì, Hà Nội', certification: 'VietGAP' }, season: { name: 'Vụ Xuân 2024' }, batchCode: 'BATCH-CUCUMBER-001' },
+    { id: 11, name: 'Bí Đỏ', price: 15000, quantity: 40, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Ba Vì, Hà Nội', certification: 'VietGAP' }, season: { name: 'Vụ Xuân 2024' }, batchCode: 'BATCH-PUMPKIN-001' },
+    { id: 12, name: 'Bắp Cải Xanh', price: 18000, quantity: 45, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Ba Vì, Hà Nội', certification: 'VietGAP' }, season: { name: 'Vụ Xuân 2024' }, batchCode: 'BATCH-CABBAGE-001' },
+    { id: 13, name: 'Cải Thảo', price: 20000, quantity: 40, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Ba Vì, Hà Nội', certification: 'VietGAP' }, season: { name: 'Vụ Xuân 2024' }, batchCode: 'BATCH-BOKCHOY-001' },
+    { id: 14, name: 'Rau Cải Ngọt', price: 18000, quantity: 50, farm: { name: 'Vườn Rau Sạch Gia Đình', address: 'Ba Vì, Hà Nội', certification: 'VietGAP' }, season: { name: 'Vụ Xuân 2024' }, batchCode: 'BATCH-SWEET-CABBAGE-001' },
+    
+    // === VƯỜN CÂY ĂN TRÁI TIỀN GIANG ===
+    { id: 15, name: 'Cam Sành', price: 28000, quantity: 60, farm: { name: 'Vườn Cây Ăn Trái Tiền Giang', address: 'Cái Bè, Tiền Giang', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-ORANGE-001' },
+    { id: 16, name: 'Bưởi Da Xanh', price: 35000, quantity: 40, farm: { name: 'Vườn Cây Ăn Trái Tiền Giang', address: 'Cái Bè, Tiền Giang', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-GRAPEFRUIT-001' },
+    { id: 17, name: 'Chôm Chôm', price: 45000, quantity: 35, farm: { name: 'Vườn Cây Ăn Trái Tiền Giang', address: 'Cái Bè, Tiền Giang', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-RAMBUTAN-001' },
+    { id: 18, name: 'Xoài Cát Hòa Lộc', price: 55000, quantity: 30, farm: { name: 'Vườn Cây Ăn Trái Tiền Giang', address: 'Cái Bè, Tiền Giang', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-MANGO-001' },
+    
+    // === TRANG TRẠI NẤM LÂM ĐỒNG ===
+    { id: 19, name: 'Nấm Bào Ngư', price: 85000, quantity: 25, farm: { name: 'Trang Trại Nấm Lâm Đồng', address: 'Đơn Dương, Lâm Đồng', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-MUSHROOM-001' },
+    { id: 20, name: 'Nấm Kim Châm', price: 95000, quantity: 20, farm: { name: 'Trang Trại Nấm Lâm Đồng', address: 'Đơn Dương, Lâm Đồng', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-GOLDEN-MUSHROOM-001' },
+    { id: 21, name: 'Nấm Đông Cô', price: 120000, quantity: 18, farm: { name: 'Trang Trại Nấm Lâm Đồng', address: 'Đơn Dương, Lâm Đồng', certification: 'VietGAP' }, season: null, batchCode: 'BATCH-SHIITAKE-001' },
+    
+    // === TRANG TRẠI RAU SẠCH ĐỒNG THÁP ===
+    { id: 22, name: 'Rau Đay', price: 16000, quantity: 50, farm: { name: 'Trang Trại Rau Sạch Đồng Tháp', address: 'Cao Lãnh, Đồng Tháp', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-JUTE-001' },
+    { id: 23, name: 'Rau Mồng Tơi', price: 17000, quantity: 45, farm: { name: 'Trang Trại Rau Sạch Đồng Tháp', address: 'Cao Lãnh, Đồng Tháp', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-MALABAR-001' },
+    { id: 24, name: 'Rau Dền', price: 15000, quantity: 50, farm: { name: 'Trang Trại Rau Sạch Đồng Tháp', address: 'Cao Lãnh, Đồng Tháp', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-AMARANTH-001' },
+    
+    // === TRANG TRẠI HỮU CƠ CẦN THƠ ===
+    { id: 25, name: 'Khoai Lang Tím', price: 20000, quantity: 40, farm: { name: 'Trang Trại Hữu Cơ Cần Thơ', address: 'Cần Thơ', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-PURPLE-SWEET-POTATO-001' },
+    { id: 26, name: 'Bắp Nếp', price: 18000, quantity: 50, farm: { name: 'Trang Trại Hữu Cơ Cần Thơ', address: 'Cần Thơ', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-STICKY-CORN-001' },
+    { id: 27, name: 'Đậu Bắp', price: 25000, quantity: 35, farm: { name: 'Trang Trại Hữu Cơ Cần Thơ', address: 'Cần Thơ', certification: 'VietGAP' }, season: { name: 'Vụ Mùa 2024' }, batchCode: 'BATCH-OKRA-001' },
+    
+    // === TRANG TRẠI RAU SẠCH BÌNH DƯƠNG ===
+    { id: 28, name: 'Cà Tím', price: 30000, quantity: 30, farm: { name: 'Trang Trại Rau Sạch Bình Dương', address: 'Dầu Tiếng, Bình Dương', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-EGGPLANT-001' },
+    { id: 29, name: 'Ớt Hiểm', price: 65000, quantity: 25, farm: { name: 'Trang Trại Rau Sạch Bình Dương', address: 'Dầu Tiếng, Bình Dương', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-CHILI-001' },
+    { id: 30, name: 'Hành Tây', price: 32000, quantity: 40, farm: { name: 'Trang Trại Rau Sạch Bình Dương', address: 'Dầu Tiếng, Bình Dương', certification: 'VietGAP' }, season: { name: 'Vụ Đông 2024' }, batchCode: 'BATCH-ONION-001' },
 ];
 
 // Hàm lấy icon tự động - Sắp xếp chính xác hơn với nhiều loại rau củ
@@ -174,10 +207,14 @@ export default function MarketplacePage() {
                 } else if (Array.isArray(res.data) && res.data.length > 0) {
                     setProducts(res.data);
                 } else {
+                    // Nếu API trả về empty, dùng fallback products
+                    console.warn('API trả về empty, sử dụng sản phẩm mẫu');
                     setProducts(FALLBACK_PRODUCTS);
                 }
             })
-            .catch(() => {
+            .catch((error) => {
+                console.warn('Lỗi kết nối API, sử dụng sản phẩm mẫu:', error.message);
+                // Khi API lỗi, dùng fallback products để demo
                 setProducts(FALLBACK_PRODUCTS);
             })
             .finally(() => setLoading(false));
