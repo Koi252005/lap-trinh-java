@@ -10,16 +10,25 @@ exports.createOrder = async (req, res) => {
         if (!rawProductId || isNaN(productId) || productId < 1) {
             return res.status(400).json({ message: 'Mã sản phẩm không hợp lệ' });
         }
-        // Logic fallback nếu req.user chưa có (do middleware verifyToken chỉ trả về userFirebase)
+        
+        // Đảm bảo có user - tìm hoặc tạo nếu chưa có
         let retailerId;
-        if (req.user) {
+        if (req.user && req.user.id) {
             retailerId = req.user.id;
-        } else if (req.userFirebase) {
-            const user = await User.findOne({ where: { firebaseUid: req.userFirebase.uid } });
-            if (!user) return res.status(404).json({ message: 'User not found' });
+        } else if (req.userFirebase && req.userFirebase.uid) {
+            // Tìm hoặc tạo user (findOrCreate để tránh duplicate)
+            const [user, created] = await User.findOrCreate({
+                where: { firebaseUid: req.userFirebase.uid },
+                defaults: {
+                    email: req.userFirebase.email || `user_${req.userFirebase.uid.substring(0, 8)}@example.com`,
+                    fullName: req.userFirebase.name || 'Người dùng',
+                    role: 'retailer',
+                    status: 'active'
+                }
+            });
             retailerId = user.id;
         } else {
-            return res.status(401).json({ message: 'Unauthorized' });
+            return res.status(401).json({ message: 'Unauthorized - Vui lòng đăng nhập lại' });
         }
 
         // Kiểm tra sản phẩm
@@ -40,46 +49,62 @@ exports.createOrder = async (req, res) => {
             return res.status(400).json({ message: 'Số lượng sản phẩm không đủ (còn ' + (product.quantity || 0) + ' kg)' });
         }
 
-        const totalPrice = product.price * qty;
+        const totalPrice = Number(product.price) * qty;
+        if (isNaN(totalPrice) || totalPrice <= 0) {
+            return res.status(400).json({ message: 'Giá sản phẩm không hợp lệ' });
+        }
 
         // Tạo đơn hàng
         const newOrder = await Order.create({
             retailerId,
             productId,
             quantity: qty,
-            totalPrice,
-            contractTerms, // Điều khoản hợp đồng (nếu có)
+            totalPrice: totalPrice,
+            contractTerms: contractTerms || 'Mua qua sàn nông sản sạch - BICAP',
             status: 'pending'
         });
 
-        // Tạm thời chưa trừ số lượng sản phẩm ngay, chờ xác nhận đơn hàng
-        // Hoặc trừ luôn tùy logic. Ở đây mình trừ luôn cho đơn giản để tránh mua quá.
+        // Trừ số lượng sản phẩm
         product.quantity -= qty;
-        if (product.quantity === 0) product.status = 'distributed'; // Hết hàng
+        if (product.quantity === 0) product.status = 'distributed';
         await product.save();
 
-        // --- NOTIFICATION START ---
-        const { createNotificationInternal } = require('./notificationController');
-        // Get Farm Owner ID
-        const farm = await Farm.findByPk(product.farmId);
-        if (farm) {
-            await createNotificationInternal(
-                farm.ownerId,
-                'Đơn hàng mới',
-                `Bạn có đơn hàng mới #${newOrder.id} cho sản phẩm ${product.name}`,
-                'order'
-            );
+        // Notification (không block nếu lỗi)
+        try {
+            const { createNotificationInternal } = require('./notificationController');
+            const farm = await Farm.findByPk(product.farmId);
+            if (farm && farm.ownerId) {
+                await createNotificationInternal(
+                    farm.ownerId,
+                    'Đơn hàng mới',
+                    `Bạn có đơn hàng mới #${newOrder.id} cho sản phẩm ${product.name}`,
+                    'order'
+                ).catch(e => console.warn('Notification failed:', e.message));
+            }
+        } catch (notifErr) {
+            console.warn('Notification skipped:', notifErr.message);
         }
-        // --- NOTIFICATION END ---
 
         res.status(201).json({
             message: 'Đặt hàng thành công!',
-            order: newOrder
+            order: {
+                id: newOrder.id,
+                productId: newOrder.productId,
+                quantity: newOrder.quantity,
+                totalPrice: newOrder.totalPrice,
+                status: newOrder.status,
+                createdAt: newOrder.createdAt
+            }
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Lỗi tạo đơn hàng', error: error.message });
+        console.error('[createOrder] Error:', error);
+        console.error('[createOrder] Stack:', error.stack);
+        res.status(500).json({ 
+            message: 'Lỗi tạo đơn hàng', 
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 

@@ -10,6 +10,17 @@ import { QRCodeSVG } from 'qrcode.react';
 import { getProductIcon } from '@/lib/productIcons';
 import { API_BASE } from '@/lib/api';
 
+function tryGetStoredProduct(id: number): Product | null {
+  if (typeof window === 'undefined' || !id || id < 1) return null;
+  try {
+    const raw = sessionStorage.getItem('bicap_selected_product');
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (p && Number(p.id) === id) return p as Product;
+  } catch (_) {}
+  return null;
+}
+
 interface Product {
   id: number;
   name: string;
@@ -31,63 +42,78 @@ export default function RetailerProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [buyQuantity, setBuyQuantity] = useState<number>(1);
   const [buying, setBuying] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
     }
+    const idNum = Number(id);
     axios
       .get<{ product: Product }>(`${API_BASE}/public/products/${id}`, { validateStatus: () => true })
       .then((res) => {
         if (res.status === 200 && res.data?.product) {
           setProduct({ ...res.data.product, isSample: !!res.data.isSample });
-        } else {
-          setProduct(null);
+          return;
         }
+        const stored = tryGetStoredProduct(idNum);
+        if (stored) setProduct(stored);
+        else setProduct(null);
       })
-      .catch(() => setProduct(null))
+      .catch(() => {
+        const stored = tryGetStoredProduct(idNum);
+        if (stored) setProduct(stored);
+        else setProduct(null);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
   const handleBuy = async () => {
+    setMessage(null);
     if (!user) {
-      alert('Vui lòng đăng nhập để đặt hàng.');
+      setMessage({ type: 'error', text: 'Vui lòng đăng nhập để đặt hàng.' });
       router.push('/login');
       return;
     }
-    if (!product) return;
+    if (!product) {
+      setMessage({ type: 'error', text: 'Không có thông tin sản phẩm.' });
+      return;
+    }
     setBuying(true);
     try {
-      const token = await auth?.currentUser?.getIdToken();
+      const token = await auth?.currentUser?.getIdToken?.();
       if (!token) {
-        alert('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        setMessage({ type: 'error', text: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' });
         setBuying(false);
         return;
       }
+      const payload = {
+        productId: Number(product.id),
+        quantity: Math.max(1, Number(buyQuantity) || 1),
+        contractTerms: 'Mua qua sàn nông sản sạch - BICAP',
+      };
+      console.log('[Order] Sending:', payload);
       const res = await axios.post(
         `${API_BASE}/orders`,
-        {
-          productId: Number(product.id),
-          quantity: Number(buyQuantity) || 1,
-          contractTerms: 'Mua qua sàn nông sản sạch - BICAP',
-        },
-        { headers: { Authorization: `Bearer ${token}` }, timeout: 10000, validateStatus: () => true }
+        payload,
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 15000, validateStatus: () => true }
       );
+      console.log('[Order] Response:', res.status, res.data);
       if (res.status === 201 || res.status === 200) {
-        alert('Gửi yêu cầu đặt hàng thành công! Vui lòng chờ xác nhận.');
-        router.push('/retailer/orders');
+        setMessage({ type: 'success', text: 'Gửi yêu cầu đặt hàng thành công! Đang chuyển...' });
+        setTimeout(() => router.push('/retailer/orders'), 800);
       } else {
-        const msg = res.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại.';
+        const msg = res.data?.message || res.data?.error || `Đặt hàng thất bại (${res.status}). Vui lòng thử lại.`;
+        setMessage({ type: 'error', text: msg + (res.data?.details ? '\n' + res.data.details : '') });
         if (res.data?.needsSeed || msg.includes('không tồn tại')) {
-          alert(msg + '\n\nVào trang Sàn → bấm "Tạo sản phẩm mẫu" rồi thử đặt hàng lại.');
-          router.push('/retailer/market');
-        } else {
-          alert(msg);
+          setTimeout(() => router.push('/retailer/market'), 2000);
         }
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Lỗi kết nối. Kiểm tra backend và database.');
+      console.error('[Order] Error:', err);
+      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Lỗi kết nối. Kiểm tra backend và database.';
+      setMessage({ type: 'error', text: msg + (err.response?.data?.details ? '\n' + err.response.data.details : '') });
     } finally {
       setBuying(false);
     }
@@ -109,7 +135,9 @@ export default function RetailerProductDetailPage() {
       <div className="container mx-auto p-4 max-w-4xl">
         <Link href="/retailer/market" className="text-green-600 hover:underline mb-4 inline-block">← Quay lại sàn</Link>
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
-          <p className="text-red-500">Sản phẩm không tồn tại.</p>
+          <p className="text-red-500 dark:text-red-400 font-medium">Sản phẩm không tồn tại hoặc đã hết.</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">Vui lòng quay lại Sàn và bấm &quot;Tạo sản phẩm mẫu&quot; nếu chưa có sản phẩm.</p>
+          <Link href="/retailer/market" className="inline-block mt-6 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Về trang Sàn</Link>
         </div>
       </div>
     );
@@ -174,18 +202,29 @@ export default function RetailerProductDetailPage() {
               </div>
 
               <div className="space-y-3">
+                {message && (
+                  <div
+                    className={`p-3 rounded-lg text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'}`}
+                  >
+                    {message.text}
+                  </div>
+                )}
                 {product.isSample && (
                   <p className="text-amber-600 dark:text-amber-400 text-sm mb-3">
                     ⚠️ Sản phẩm mẫu (DB chưa kết nối). Chạy: cd bicap-backend && node scripts/addSampleProducts.js
                   </p>
                 )}
                 <button
-                  onClick={handleBuy}
-                  disabled={buying || product.isSample || (product.quantity ?? 0) === 0 || buyQuantity <= 0}
+                  type="button"
+                  onClick={() => handleBuy()}
+                  disabled={buying || product.isSample || (Number(product.quantity) || 0) < 1 || (Number(buyQuantity) || 0) < 1}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {buying ? 'Đang xử lý...' : product.isSample ? 'Không thể đặt (sản phẩm mẫu)' : 'Gửi Yêu Cầu Đặt Hàng'}
                 </button>
+                {(Number(product.quantity) || 0) < 1 && !product.isSample && (
+                  <p className="text-sm text-amber-600">Sản phẩm tạm hết hàng. Vui lòng chọn sản phẩm khác.</p>
+                )}
 
                 <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
